@@ -1,6 +1,6 @@
 (ns adatx.core-test
-  (:require [clojure.test :refer :all]
-            [adatx.core :refer :all]))
+  (:use clojure.test
+        adatx.core))
 
 (deftest a-test
   (testing "FIXME, I fail."
