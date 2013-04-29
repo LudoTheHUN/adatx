@@ -1,5 +1,7 @@
-(ns adatx.core)
-
+(ns adatx.core
+   (:use [clojail.core :only [sandbox]]
+        [clojail.testers :only [blacklist-symbols blacklist-objects]])
+   )
 
 
 ;;TODO
@@ -17,6 +19,11 @@
   [x & foos]
   (println x "Hello, World!"))
 
+;;Setting up sandbox in clojail
+(def tester [(blacklist-symbols #{'alter-var-root})
+             (blacklist-objects [java.lang.Thread])]) ; Create a blacklist.
+(def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
+
 (:arglists (meta #'foo))  
 
 (let [myfoo (fn [x] (+ 1 x))]
@@ -26,7 +33,7 @@
 
 (ns-publics 'adatx.core)
   
-(print (ns-refers 'adatx.core))
+;(print (ns-refers 'adatx.core))
 
 (defn takeyourtime [x] (future 
              (do (Thread/sleep x) (+ 1 2) 
@@ -46,18 +53,79 @@
      (catch Exception e# {:error 1 :errormsg e#     :expr    ~@body :quoted '~@body})
      ))
 
-(defmacro add_timing [& body]
+(defmacro my_eval2 [& body]
+  `(let [fut# (future
+               {:eval   (eval ~@body)
+                :expr    ~@body 
+                :quoted '~@body})
+         ans# (try (deref fut#
+                     10 {:timeout 10})
+                  (catch Exception e# {:error 1 :errormsg e#     :expr    ~@body :quoted '~@body}))
+         ]
+     (future-cancel fut#)
+     ans#
+   ))
+
+(defmacro my_eval3 [& body]    ;; trying to cancel before we deref to prevent heapspace hits
+  `(let [fut# (future
+               {:eval   (eval ~@body)
+                :expr    ~@body 
+                :quoted '~@body})
+         cancel# (do (Thread/sleep 10) (future-cancel fut#))
+         ]
+
+     (try (conj (deref fut# 10 {:timeout 10}) {:fcanel cancel#})
+                  (catch Exception e# {:error 1 :errormsg e#     :expr    ~@body :quoted '~@body  :fcanel cancel#}))
+   ))
+
+
+(defmacro my_eval21 [& body]
+  `(let [fut# (future
+               {:eval-sb   (sb ~@body)
+                :expr    ~@body 
+                :quoted '~@body})
+         ans# (try (deref fut#
+                     50 {:timeout 50 :expr ~@body :quoted '~@body})
+                  (catch Exception e# {:error 1 :errormsg e#     :expr    ~@body :quoted '~@body}))
+         ]
+     ;(future-cancel fut#)
+     ans#
+   ))
+
+
+(defn my_eval22 [body]     ;;function version also works... but breaks the :quoted key, which is not important...
+  (let [fut (future
+               {:eval-sb   (sb body)
+                :expr    body 
+                :quoted 'body})
+        ans (try (deref fut
+                     50 {:timeout 50 :expr    body :quoted 'body})
+                  (catch Exception e {:error 1 :errormsg e     :expr    body :quoted 'body}))
+         ]
+     ;(future-cancel fut#)
+     ans
+   ))
+
+
+
+(defmacro add_timing [& body]    ;Do I really need a macro here??? Yes, nano checkpoints would not see the execution time under normal evaluation 
   `(let [start_nanotime#  (System/nanoTime)
          answer# ~@body
          end_nanotime# (System/nanoTime)]
    (conj answer# { ;:start_nanotime start_nanotime# 
                    ;:end_nanotime end_nanotime# 
                    :eval_nanotime (- end_nanotime# start_nanotime#) })))
+
   
 (macroexpand-1 '(add_timing {:d (+ 1 2)}))
 
 
+
+
+
 (add_timing {:d (+ 1 2)})
+
+;;(sb '(+ 3 3))
 
 
 (add_timing (my_eval (+ 1 2)))
@@ -71,13 +139,17 @@
                        b 2]
                    (+ a b)))
 
-(def codesinpet '(let (vector a 1 
+
+  (def codesinpet '(let (vector a 1 
                        b 2)
                    (+ a b)))
-
+       
+(quote 
+  ;;fails, needs to be literal :-(
 (let (vec '(a 1 
                        b 2))
-                   (+ a b))
+                   (+ a b))  
+)
 
 (def codesinpet '(let [a 1
                        b 2
@@ -94,6 +166,10 @@
 ;(def codesinpet '(iterate inc 5))  ;; this does blow us up :-( with OutOfMemoryError GC overhead limit exceeded  [trace missing]
 ;trying to introduce an explicity future cancel
 
+;(class (iterate inc 5))
+
+;(sb '(iterate inc 5))    ;;;Thank you clojail... this is now safe too
+
 
 (defn stackm [x]
   (if (< x 0)
@@ -105,7 +181,13 @@
 (def codesinpet  '(stackm 10000))  ; shows we are safe to stack overflow
 ;NOTE we are already safe to timeout, so we should never blow up.
 
-(def ans (add_timing (my_eval codesinpet)))
+(def ans (time (add_timing (my_eval22 codesinpet))))
+ans
+
+(sb '(stackm 10000))
+
+
+
 
 (add_timing (my_eval codesinpet))
 
@@ -114,8 +196,6 @@
 (count (flatten codesinpet))
 (count (str codesinpet))
 
-
-(def valid_symbols 
 
 
 (defn generate_list [& symbols]
@@ -144,16 +224,6 @@
 
 
 (add_timing (my_eval '(hash-map :3 2 5)))
-
-
-(letfn [(placeholder [n]
-          (fn [& args]
-            (nth args n)))]
-  (doseq [i (range 5)]
-    (intern *ns* (symbol (str "_" i))
-            (placeholder i))))
-
-(placeholder 3)
 
 
 
