@@ -7,6 +7,7 @@
 ;create known function store
 ;create teacher in-out pairs
 ;create valid s-expression builder
+  ;numbering system to generate expressions?
 ;create safe, execution time aware execute function
 ;create brute force search strategy
 
@@ -70,17 +71,89 @@
                        b 2]
                    (+ a b)))
 
+(def codesinpet '(let (vector a 1 
+                       b 2)
+                   (+ a b)))
+
+(let (vec '(a 1 
+                       b 2))
+                   (+ a b))
+
 (def codesinpet '(let [a 1
                        b 2
                        f1 (fn [x] (* x x))]
                    (+ a (f1 b))))
 
-(add_timing (my_eval codesinpet))
+
+(def codesinpet '(let [a {:v 1}
+                       b {:w 2}
+                       f1 (fn [x] (* x x))]
+                   (conj a b)))
+
+(def codesinpet '(take 5 (iterate inc 5)))
+;(def codesinpet '(iterate inc 5))  ;; this does blow us up :-( with OutOfMemoryError GC overhead limit exceeded  [trace missing]
+;trying to introduce an explicity future cancel
+
+
+(defn stackm [x]
+  (if (< x 0)
+    x
+    (stackm (dec x))))
+  
+;;  (stackm 10000)
+
+(def codesinpet  '(stackm 10000))  ; shows we are safe to stack overflow
+;NOTE we are already safe to timeout, so we should never blow up.
+
+(def ans (add_timing (my_eval codesinpet)))
 
 (add_timing (my_eval codesinpet))
 
+;complexity estimates
+(count codesinpet)
+(count (flatten codesinpet))
+(count (str codesinpet))
 
 
+(def valid_symbols 
+
+
+(defn generate_list [& symbols]
+  (let [len_symbols (count symbols)]
+    len_symbols))
+
+(generate_list 'w)
+              
+
+'(a b [23 h])
+'()
+(cons 'a '(b))
+(cons (vector 'a) '[b [8 9]])
+(vec (cons (vector 'a) '[b [8 9]]))
+
+(def a1 '())
+(def a2 (cons 'let a1))
+(def a3 (cons (vector) a2))
+(def a4 (cons (vec (cons 'a (first a3))) (rest a3)))
+
+
+;;TODO need to track depth... number , pairs for maps and lets (an optimisation)
+;;take a flat list  with special keywords for starting, ending list,vecs,maps...??
+(hash-map 'a 'b)
+
+
+
+(add_timing (my_eval '(hash-map :3 2 5)))
+
+
+(letfn [(placeholder [n]
+          (fn [& args]
+            (nth args n)))]
+  (doseq [i (range 5)]
+    (intern *ns* (symbol (str "_" i))
+            (placeholder i))))
+
+(placeholder 3)
 
 
 
@@ -105,9 +178,6 @@
 
 (let [dothis {:ex '(/ 12 0)}]
   (my_eval (:ex dothis)))
-
-
-
 
 
 (let [a1     3
