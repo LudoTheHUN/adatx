@@ -79,14 +79,14 @@
    ))
 
 
-(defmacro my_eval21 [& body]
+(defmacro my_eval21 [& body]        ;;uses clojail sandbox, is safe to all known hangs. Just need to feed a collectin as program, probably a list
   `(let [fut# (future
                {:eval-sb   (sb ~@body)
                 :expr    ~@body 
                 :quoted '~@body})
          ans# (try (deref fut#
                      50 {:timeout 50 :expr ~@body :quoted '~@body})
-                  (catch Exception e# {:error 1 :errormsg e#     :expr    ~@body :quoted '~@body}))
+                  (catch Exception e# {:error 1 :errormsg e#  :expr ~@body :quoted '~@body}))
          ]
      ;(future-cancel fut#)
      ans#
@@ -99,7 +99,7 @@
                 :expr    body 
                 :quoted 'body})
         ans (try (deref fut
-                     50 {:timeout 50 :expr    body :quoted 'body})
+                     50 {:timeout 50 :expr    body :quoted 'body :error 1})
                   (catch Exception e {:error 1 :errormsg e     :expr    body :quoted 'body}))
          ]
      ;(future-cancel fut#)
@@ -120,7 +120,9 @@
 (macroexpand-1 '(add_timing {:d (+ 1 2)}))
 
 
+;;--------------------------------------------------------------
 
+;;scratch code starts here
 
 
 (add_timing {:d (+ 1 2)})
@@ -156,7 +158,6 @@
                        f1 (fn [x] (* x x))]
                    (+ a (f1 b))))
 
-
 (def codesinpet '(let [a {:v 1}
                        b {:w 2}
                        f1 (fn [x] (* x x))]
@@ -184,12 +185,12 @@
 (def ans (time (add_timing (my_eval22 codesinpet))))
 ans
 
-(sb '(stackm 10000))
+(sb '(stackm 1000000))
+
+(time (add_timing (my_eval21 '(:a 1))))
+(time (add_timing (my_eval21  '(stackm 1000000))))
 
 
-
-
-(add_timing (my_eval codesinpet))
 
 ;complexity estimates
 (count codesinpet)
@@ -221,27 +222,19 @@ ans
 ;;take a flat list  with special keywords for starting, ending list,vecs,maps...??
 (hash-map 'a 'b)
 
-
-
 (add_timing (my_eval '(hash-map :3 2 5)))
-
-
 
 (add_timing (my_eval '(+ 1 2)))
   
 (conj {:d (+ 1 2)} {:foo 2 :boo 3})
 
-
 (macroexpand-1 '(my_eval (+ 1 2)))
-
 
 (let [dothis '(+ 12 3)]
   (my_eval dothis))
 
-
 (let [dothis '(- 12 3)]
   (my_eval dothis))
-
 
 (let [dothis {:ex '(- 12 3)}]
   (my_eval (:ex dothis)))
@@ -249,11 +242,9 @@ ans
 (let [dothis {:ex '(/ 12 0)}]
   (my_eval (:ex dothis)))
 
-
 (let [a1     3
       dothis '(+ 12 a1)]
  (my_eval dothis))
-
 
 (my_eval
 (let [a1     3
@@ -261,21 +252,9 @@ ans
   dothis
   ))
 
-
-
-
-
-
-
 (my_eval 3)
 
-
 (my_eval (+ 12 3))
-
-
-  
-
-
 
 (eval '(+ 12 3))
 
@@ -295,6 +274,37 @@ ans
 
 
 
+;;-----------------------  genlist
+
+(def spec '(:l 1 2))
+
+(defn genprog-1step [partial spec depth]
+  (println "partial:" partial " spec:" spec " depth:"depth)
+  (let [specf (first spec)
+        depthf (first depth)]
+    (cond 
+      (= depthf :l)
+           (cons (genprog-1step  (first partial) spec (rest depth)) (rest partial))
+      (= specf :l)
+           (genprog-1step (cons (list) partial) (rest spec) (cons :l depth))
+      (not (= specf nil))
+           (genprog-1step (cons specf partial)  (rest spec) depth)
+      :else
+        partial)
+  ))
 
 
+(genprog-1step 3 spec nil)
+(genprog-1step '(3) spec nil)
+(genprog-1step '(3 4) spec nil)
 
+(genprog-1step '(:a) '(:l 1 :l 2) nil)
+
+(genprog-1step '((:b ):a) '(:l 1 :l 2) '(:l))
+
+(genprog-1step nil '(1 :l 2) nil)
+(genprog-1step nil '(1 3 :l 2 4 :l 5) nil)
+
+
+(cons 'nil '(a b 1))
+(list)
