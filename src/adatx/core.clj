@@ -3,7 +3,6 @@
         [clojail.testers :only [blacklist-symbols blacklist-objects]])
    )
 
-
 ;;TODO
 ;inspect correct arrities
 ;create known function store
@@ -13,32 +12,26 @@
 ;create safe, execution time aware execute function
 ;create brute force search strategy
 
-
-(defn foo
-  "I don't do a whole lot."
-  [x & foos]
-  (println x "Hello, World!"))
-
 ;;Setting up sandbox in clojail
+
+
 (def tester [(blacklist-symbols #{'alter-var-root})
              (blacklist-objects [java.lang.Thread])]) ; Create a blacklist.
 (def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
 
-(:arglists (meta #'foo))  
 
 (let [myfoo (fn [x] (+ 1 x))]
   (meta myfoo))
 
 (foo "d")
 
-(ns-publics 'adatx.core)
-  
+;(ns-publics 'adatx.core) 
 ;(print (ns-refers 'adatx.core))
 
 (defn takeyourtime [x] (future 
+  ;;DROP ME
              (do (Thread/sleep x) (+ 1 2) 
                )))
-
 (deref (takeyourtime 1) 2 :timedout)
 
 
@@ -114,8 +107,9 @@
                    ;:end_nanotime end_nanotime# 
                    :eval_nanotime (- end_nanotime# start_nanotime#) })))
 
+
   
-(macroexpand-1 '(add_timing {:d (+ 1 2)}))
+;(macroexpand-1 '(add_timing {:d (+ 1 2)}))
 
 
 ;;--------------------------------------------------------------
@@ -123,7 +117,7 @@
 ;;scratch code starts here
 
 
-(add_timing {:d (+ 1 2)})
+;(add_timing {:d (+ 1 2)})
 
 ;;(sb '(+ 3 3))
 
@@ -176,12 +170,15 @@
 (def codesinpet  '(stackm 10000))  ; shows we are safe to stack overflow
 ;NOTE we are already safe to timeout, so we should never blow up.
 
+
 (quote
-  (def ans1 (time (add_timing (my_eval22 codesinpet))))    ;;this blows up clojure??!?!?
+  (def ans0 (time (add_timing (my_eval21 1))))
+
+  (def ans1 (time (add_timing (my_eval21 codesinpet))))    ;;this blows up clojure??!?!?
 ans1
-  (def ans2 (time (add_timing (my_eval22 '(stackm 1000000)))))
+  (def ans2 (time (add_timing (my_eval21 '(stackm 1000000)))))
 ans2
-(def ans3 (time (add_timing (my_eval22 '(iterate inc 5)))))
+(def ans3 (time (add_timing (my_eval21 '(iterate inc 5)))))
 ans3
 )
 ;(sb '(stackm 1000000))
@@ -281,6 +278,8 @@ ans3
 (genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 :ld 10 11) nil)  ;; '(( 10 11 (9 8 (7 6 5))) 4 3 2 1)
 
 
+(quote
+  
 (genprog '(:a) '(:l 1 :l 2) nil)
 
 (second '(1))
@@ -303,3 +302,5 @@ ans3
 '((({:key (quote val)} :goo "foo" (quote 2) 5) 4 2) 3 1)
 (cons 'nil '(a b 1))
 (list)
+
+)
