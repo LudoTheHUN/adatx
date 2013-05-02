@@ -176,78 +176,60 @@
 (r-pairoff-post '(:l :ld 2 :l 6 :ld :ld :ld :l 7 8) :l :ld)
 
 
-(defn genprog [partial spec depth]
+(def symlookup
+  {1 'hello
+   2 'how
+   3 "boom"
+   4 'you
+   5 5
+   6 \a
+   7 ['a 'b]
+   8 #{:1 :a}
+   9 {:a 1 :b "foo"}
+        })
+
+
+(defn genprog [partial spec symlookup]
   "WIP works, needs to do much to make it array literal aware"
   ;(println "partial:" partial " spec:" spec " depth:"depth)
-  (let [specf        (first spec)
-        depthf       (first depth)
+  (let [speclookup   (symlookup (first spec))
+        specf        (first spec)
         spec_pre_ld  (r-pairoff-pre spec :l :ld)
         spec_past_ld (let [len (count spec_pre_ld)] (drop len spec))
-        second_spec  (second spec)]
-    (cond 
-      (= depthf :l)
-           (cons (genprog  (first partial) spec (rest depth)) (rest partial))
-      (= specf :l)     ;;starting a new list
-           (genprog    ;;work past return to the same depth level
-             (genprog (cons (list) partial) (rest spec_pre_ld) (cons :l depth))   ;;instructions with which to fill the inner list
-             spec_past_ld
-             depth)
-      (and (not (= specf nil)) (not (= specf :ld)))    ;; the sale level add a symbol
-           (genprog (cons specf partial)  (rest spec) depth)
-      :else
-        partial)
-  ))
-
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 11 ) nil)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
-
-(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) nil)
-
-(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld :ld) nil)
-
-
-(def sb (sandbox tester :timeout 50 :namespace 'adatx.core))   ;;; NOTE sb will snapshot the 'adatx.core namespace as it is at the time we come here, it will be reset to this state with each call to sb
-
-
-
-(defn genprog [partial spec depth]
-  "WIP works, needs to do much to make it array literal aware"
-  ;(println "partial:" partial " spec:" spec " depth:"depth)
-  (let [specf        (first spec)
-        depthf       (first depth)
-        spec_pre_ld  (r-pairoff-pre spec :l :ld)
-        spec_past_ld (let [len (count spec_pre_ld)] (drop len spec))
-        second_spec  (second spec)]
-    (cond 
-    ;  (= depthf :l)
-    ;       (cons (genprog  (first partial) spec (rest depth)) (rest partial))
-    (= specf :l)     ;;starting a new list
+        ]
+   (cond 
+    (= specf :l)     
         (genprog
              (cons 
-               (genprog (list) (rest spec_pre_ld) (cons :l depth))
+               (genprog (list) (rest spec_pre_ld) symlookup)
                partial
                )
-         spec_past_ld  depth)
+         spec_past_ld symlookup)
     (and (not (= specf nil)) 
-         (not (= specf :ld)) 
+         (not (= specf :ld))
          ;(not (= specf :l))
          )   ;; the sale level add a symbol
-           (genprog (cons specf partial)  (rest spec) depth)
+           (genprog (cons speclookup partial)  (rest spec) symlookup)
      :else
         partial)
   ))
 
 
 
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 11 ) nil)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
-
-(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) nil)
-
-(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) nil)
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 11 ) symlookup)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
+(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
 
 
+(genprog nil '(:l :ld :ld 1) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 ) symlookup)
+(genprog nil '(1 2) symlookup)
+
+
+
+
+(def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
 
 
