@@ -102,6 +102,7 @@
 (def codesinpet '(take 5 (iterate inc 5)))
 
 (defn stackm [x]
+  "designe to stack overflow"
   (if (< x 0)
     x
     (stackm (dec x))))
@@ -114,8 +115,6 @@
 (count (str codesinpet))
 
 
-
-(def spec '(:l 1 2))
 
 
 (defn pairoff-pre [list accum match matchd depth]
@@ -175,9 +174,6 @@
 (r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld 8 9) #{:l} :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
 (r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) #{:l} :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
 
-(time (r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) #{:l} :ld))
-
-
 (r-pairoff-post '() #{:l} :ld)
 (r-pairoff-post nil #{:l} :ld)
 (r-pairoff-post nil #{:l} :ld)
@@ -199,7 +195,9 @@
    10 ''(sdf sdfwe wer)     })
 
 (def symlookup
-  {1 1
+  {:l :listgen
+   :v :vectorgen
+   1 1
    2 2
    3 3
    4 4
@@ -213,7 +211,10 @@
 
 
 (defn genprog [partial spec symlookup]
-  "v1.2 correct for lists generation with :l, :v and :ld"
+  "v1.2 correct for lists generation with :l, :v and :ld
+   consider adding :m for literal map support, will need to deal with bad pairs
+   consider adding :s for literal set support, will need to deal with duplicate keys
+"
   ;(println "partial:" partial " spec:" spec " depth:"depth)
   (let [speclookup   (symlookup (first spec))
         specf        (first spec)
@@ -253,36 +254,42 @@
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
-
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
 (genprog nil '(1 2 3 4 :v :l 6 :l  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
-
-
 (genprog nil '(:l :ld :ld 1) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
 (genprog nil '(1 ) symlookup)
 (genprog nil '(1 2) symlookup)
-
 (genprog nil '(2 2 5) symlookup)
 (genprog nil '(2) symlookup)
 
+
 (list   '(2))
 (identity 2)
-
 (vec '(:a 1 :b 2))
 (apply hash-map '(:a 1 :b 2))
 (hash-map :a 1 :b 2)
 
 
+;;TODO 
+
+;spec_iterate
+
+(nth (iterate inc 5) 10)
 
 
+
+;; calls have to be after sb redefinition , else sandbox resets the namespace
+;;TODO move sandboxing to dedicated namespace
 (def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
 
-;; calls have to be after sb redefinition 
-(time (add_timing (my_eval22 (genprog nil '(2 2 5) symlookup))))
-(time (add_timing (my_eval22 '(+ 2 a))))
+
+
+
+ (add_timing (my_eval22 (genprog nil '(2 2 5) symlookup)))
+ (add_timing (my_eval22 '(+ 2 a)))
 
 (class
-  (class (:errormsg (time (add_timing (my_eval22 '(+ 2 a)))))))
+  (class (:errormsg  (add_timing (my_eval22 '(+ 2 a))))))
 
  (ns-publics 'adatx.core)
 
