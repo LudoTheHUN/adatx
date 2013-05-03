@@ -1,6 +1,7 @@
 (ns adatx.core
    (:use [clojail.core :only [sandbox]]
-        [clojail.testers :only [blacklist-symbols blacklist-objects]])
+        [clojail.testers :only [blacklist-symbols blacklist-objects]]
+        [clojure.pprint])
    )
 
 ;;TODO
@@ -197,6 +198,7 @@
 (def symlookup
   {:l :listgen
    :v :vectorgen
+   :ld :depthdown
    1 1
    2 2
    3 3
@@ -261,6 +263,7 @@
 (genprog nil '(1 2) symlookup)
 (genprog nil '(2 2 5) symlookup)
 (genprog nil '(2) symlookup)
+(genprog nil '(:ld) symlookup)
 
 
 (list   '(2))
@@ -272,10 +275,64 @@
 
 ;;TODO 
 
-;spec_iterate
+(defn spec_iterate [spec keylist]
+  "returns next spec   where spec is a list, each element is in the ordered list given by symlookup
+   iterating up on the left first"
+ (let [specf (first spec)
+       next  (second (drop-while #(not(= % specf))  keylist))  ]
+   (cond 
+     next    ;first number is going up by one
+       (cons next (rest spec))
+     (not specf)  ;;we need to grow the spec, 
+       (cons (first keylist) spec)
+     :else   ;first number it ticking round, rest of the numbers get to tick up by one if need be.. 
+       (cons (first keylist) (spec_iterate (rest spec) keylist))     
+       )
+  )
+)
 
+(spec_iterate '(:v 2 3 :l)  '(1 2 :ld :l :v))
+(spec_iterate '(:v :v :v :l)  '(1 2 :ld :l :v))
+(spec_iterate '(:v :v :v :v)  '(1 2 :ld :l :v))
+(spec_iterate '(:v :v :v :v)  '(1 2 :ld :l :v))
+(spec_iterate '(1)  '(1 2 :ld :l :v))
+
+(defn spec_iterate_f [keylist]
+  (fn [x] (spec_iterate x  keylist)))
+
+
+;(pprint (take 100 (iterate (spec_iterate_f '(1 2 :ld :l :v))  '(1 :v :v :v)  )))
+
+(def spec_iter_defed (spec_iterate_f '(1 2 :ld :l :v)))
+
+(time 
+  (last (take 1000000 (iterate spec_iter_defed  '(1)  ))
+   ))
+
+(genprog nil 
+         (last 
+           (take 1000 (iterate spec_iter_defed  '(1)  ))
+               )
+         symlookup)
+
+(time
+ (map (fn [x] (genprog nil x symlookup))  (take 100 (iterate spec_iter_defed  '(1)  )))
+)
+
+(/ (* 10000 0.05) 60 60)
+
+(def symlookup
+  {:l :listgen
+   :v :vectorgen
+   :ld :depthdown
+   1 1
+   2 2}
+  )
+
+
+  
 (nth (iterate inc 5) 10)
-
+;;(sort (keys symlookup))
 
 
 ;; calls have to be after sb redefinition , else sandbox resets the namespace

@@ -10,6 +10,7 @@
 (def symlookup-nums
   {:l :listgen
    :v :vectorgen
+   :ld :depthdown
    1 1
    2 2
    3 3
@@ -28,6 +29,7 @@
   (testing "r-pairoff-pre, lists upto the next time the depth is the same. "
     (is (=     (r-pairoff-pre '() #{:l} :ld)       '()  ))     ;nil cases
     (is (=     (r-pairoff-pre nil #{:l} :ld)       '()  ))     ;nil cases
+    (is (=     (r-pairoff-pre '(:ld) #{:l} :ld)                 '(:ld)  ))     ;bad cases
     (is (=     (r-pairoff-pre '(1 2 3 :l 4 5 6 7 8)  #{:l} :ld)     '()))   ;first element not a depth increaser, no result 
     (is (=     (r-pairoff-pre '(:l 4 5 :ld 6 7 8)    #{:l} :ld)     '(:l 4 5 :ld)  ))  ;;
     (is (=     (r-pairoff-pre '(:l 4 :l 5 :ld 6 :ld 7 8) #{:l} :ld) '(:l 4 :l 5 :ld 6 :ld) ))

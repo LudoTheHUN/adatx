@@ -6,9 +6,9 @@ Initially X will be a brute force search through the space of all programs.
 
 
 Inspired by:
-  http://www-ia.hiof.no/~rolando/
-  http://www.wolframscience.com/
-  http://www.idsia.ch/~juergen/goedelmachine.html
+  * http://www-ia.hiof.no/~rolando/
+  * http://www.wolframscience.com/
+  * http://www.idsia.ch/~juergen/goedelmachine.html
 
 
 ## Usage
