@@ -99,6 +99,9 @@
                    :eval_nanotime (- end_nanotime# start_nanotime#) })))
 
 
+;; (dotimes [n 1000000] (add_timing {:foo :booo}))  ~3000ms on the thinkpad...
+
+
 
 (def codesinpet '(take 5 (iterate inc 5)))
 
@@ -277,7 +280,8 @@
 
 (defn spec_iterate [spec keylist]
   "returns next spec   where spec is a list, each element is in the ordered list given by symlookup
-   iterating up on the left first"
+   iterating up on the left first
+   very basic, will generate specs for silly lisp forms"
  (let [specf (first spec)
        next  (second (drop-while #(not(= % specf))  keylist))  ]
    (cond 
@@ -305,13 +309,11 @@
 
 (def spec_iter_defed (spec_iterate_f '(1 2 :ld :l :v)))
 
-(time 
-  (last (take 1000000 (iterate spec_iter_defed  '(1)  ))
-   ))
+;;(last (take 1000000 (iterate spec_iter_defed  '(1)  ))) ; ~1200ms on the thinkpad
 
 (genprog nil 
          (last 
-           (take 1000 (iterate spec_iter_defed  '(1)  ))
+           (take 1000000 (iterate spec_iter_defed  '(1)  ))
                )
          symlookup)
 
