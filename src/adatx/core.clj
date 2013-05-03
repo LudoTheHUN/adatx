@@ -203,7 +203,7 @@
 
 
 (defn genprog [partial spec symlookup]
-  "WIP works, needs to do much to make it array literal aware"
+  "v1.0 correct for lists generation with :l and :ld"
   ;(println "partial:" partial " spec:" spec " depth:"depth)
   (let [speclookup   (symlookup (first spec))
         specf        (first spec)
@@ -244,8 +244,9 @@
 (genprog nil '(2 2 5) symlookup)
 
 
-
-
+(vec '(:a 1 :b 2))
+(apply hash-map '(:a 1 :b 2))
+(hash-map :a 1 :b 2)
 
 
 
