@@ -7,12 +7,13 @@
 ;inspect correct arrities
 ;create known function store
 ;create teacher in-out pairs
-;create valid s-expression builder
-  ;numbering system to generate expressions?
-;create safe, execution time aware execute function
-;create brute force search strategy
+;DONE create valid s-expression builder
+  ;DONE numbering system to generate expressions?
+;DONE create safe, execution time aware execute function
+;create brute force strategy
+   ;create itterator for s-builder
 
-;;Setting up sandbox in clojail
+;;DONE Setting up sandbox in clojail
 
 
 ;;(sb '(+ 1 2))
@@ -178,15 +179,27 @@
 
 (def symlookup
   {1 'hello
-   2 'how
-   3 "boom"
-   4 'you
-   5 5
+   2 2
+   3 "are"
+   4 '(sdf asasd)
+   5 '+
    6 \a
    7 ['a 'b]
    8 #{:1 :a}
    9 {:a 1 :b "foo"}
-        })
+   10 ''(sdf sdfwe wer)     })
+
+(def symlookup
+  {1 1
+   2 2
+   3 3
+   4 4
+   5 5
+   6 6
+   7 7
+   8 8
+   9 9
+   10 10     })
 
 
 (defn genprog [partial spec symlookup]
@@ -202,6 +215,7 @@
         (genprog
              (cons 
                (genprog (list) (rest spec_pre_ld) symlookup)
+      ;; (vec  (genprog (list) (rest spec_pre_ld) symlookup))   ;; vector version
                partial
                )
          spec_past_ld symlookup)
@@ -227,9 +241,23 @@
 (genprog nil '(1 ) symlookup)
 (genprog nil '(1 2) symlookup)
 
+(genprog nil '(2 2 5) symlookup)
+
+
+
+
+
 
 
 
 (def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
 
+;; calls have to be after sb redefinition 
+(time (add_timing (my_eval22 (genprog nil '(2 2 5) symlookup))))
+(time (add_timing (my_eval22 '(+ 2 a))))
+
+(class
+  (class (:errormsg (time (add_timing (my_eval22 '(+ 2 a)))))))
+
+ (ns-publics 'adatx.core)
 
