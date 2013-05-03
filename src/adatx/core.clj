@@ -119,12 +119,21 @@
 
 
 (defn pairoff-pre [list accum match matchd depth]
+  "finds the list upto the point the match and matched are paired off
+   match is a set of keys matchd like 
+   :l for list 
+   :v for vector
+   :m for map
+   :s for set
+   :r for regex
+   and maybe other literals
+   is just the one closing off key, typically :ld"
   (cond 
      (and (empty? depth) (not (empty? accum)))
        accum
-     (= (first list) match)
+     (contains? match (first list))
        (do ;(println "depth up")
-         (pairoff-pre (rest list) (cons (first list) accum) match matchd (cons match depth)))
+         (pairoff-pre (rest list) (cons (first list) accum) match matchd (cons 0 depth)))
      ;(and (= (first list) matchd) (not (empty? depth)))
      (= (first list) matchd)
        (do ;(println "depth down")
@@ -147,34 +156,34 @@
     (let [len (count (pairoff-pre list nil match matchd nil))]
       (drop len list)))
      
-(r-pairoff-pre '() :l :ld)
-(r-pairoff-pre nil :l :ld)
-(r-pairoff-pre '(1 2 3 :l 4 5 6 7 8)  :l :ld)      ;-> '()
-(r-pairoff-pre '(1 2 3 :l 4 5 :ld 6 7 8)  :l :ld)  ;-> '()
-(r-pairoff-pre '(:l 4 5 :ld 6 7 8)        :l :ld)  ;-> '(:l 4 5 :ld)
-(r-pairoff-pre '(:l 4 :l 5 :ld 6 :ld 7 8) :l :ld)  ;-> '(:l 4 :l 5 :ld 6 :ld)
-(r-pairoff-pre '(:l 4 5 :ld 6 :ld 7 8) :l :ld)     ;-> '(:l 4 5 :ld)
-(r-pairoff-pre '(:l 4 5 :l 6 :ld 7 8) :l :ld)      ; -> (:l 4 5 :l 6 :ld 7 8)
-(r-pairoff-pre '(:l 4 5 :l :l 6 :ld :ld :ld 7 8) :l :ld)     ; (:l 4 5 :l :l 6 :ld :ld :ld)
-(r-pairoff-pre '(:l :l :l :l 6 :ld :ld :ld :ld 7 8) :l :ld)  ; (:l :l :l :l 6 :ld :ld :ld :ld)
-(r-pairoff-pre '(:l :l :l 6 :ld :ld :ld :l 7 8) :l :ld)      ;-> (:l :l :l 6 :ld :ld :ld)
-(r-pairoff-pre '(:l :ld 2 :l 6 :ld :ld :ld :l 7 8) :l :ld)   ;->  (:l :ld)
-(r-pairoff-pre '(:l :ld :ld :ld :ld :l 7 8) :l :ld)          ;->  (:l :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :ld 4 5 :l 6 :ld 7 :ld 8 9) :l :ld)   ;-> (:l 1 2 :l 3 :ld 4 5 :l 6 :ld 7 :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :ld :l 6 :ld 7 :ld 8 9) :l :ld)       ;-> (:l 1 2 :l 3 :ld :l 6 :ld 7 :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :ld :l 6 :ld :ld 8 9) :l :ld)         ;-> (:l 1 2 :l 3 :ld :l 6 :ld :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld 8 9) :l :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) :l :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
+(r-pairoff-pre '() #{:l} :ld)
+(r-pairoff-pre nil #{:l} :ld)
+(r-pairoff-pre '(1 2 3 :l 4 5 6 7 8)  #{:l} :ld)      ;-> '()
+(r-pairoff-pre '(1 2 3 :l 4 5 :ld 6 7 8) #{:l}:ld)  ;-> '()
+(r-pairoff-pre '(:l 4 5 :ld 6 7 8)       #{:l}:ld)  ;-> '(:l 4 5 :ld)
+(r-pairoff-pre '(:l 4 :l 5 :ld 6 :ld 7 8) #{:l} :ld)  ;-> '(:l 4 :l 5 :ld 6 :ld)
+(r-pairoff-pre '(:l 4 5 :ld 6 :ld 7 8) #{:l} :ld)     ;-> '(:l 4 5 :ld)
+(r-pairoff-pre '(:l 4 5 :l 6 :ld 7 8) #{:l} :ld)      ; -> (:l 4 5 :l 6 :ld 7 8)
+(r-pairoff-pre '(:l 4 5 :l :l 6 :ld :ld :ld 7 8) #{:l} :ld)     ; (:l 4 5 :l :l 6 :ld :ld :ld)
+(r-pairoff-pre '(:l :l :l :l 6 :ld :ld :ld :ld 7 8) #{:l} :ld)  ; (:l :l :l :l 6 :ld :ld :ld :ld)
+(r-pairoff-pre '(:l :l :l 6 :ld :ld :ld :l 7 8) #{:l} :ld)      ;-> (:l :l :l 6 :ld :ld :ld)
+(r-pairoff-pre '(:l :ld 2 :l 6 :ld :ld :ld :l 7 8) #{:l} :ld)   ;->  (:l :ld)
+(r-pairoff-pre '(:l :ld :ld :ld :ld :l 7 8) #{:l} :ld)          ;->  (:l :ld)
+(r-pairoff-pre '(:l 1 2 :l 3 :ld 4 5 :l 6 :ld 7 :ld 8 9) #{:l} :ld)   ;-> (:l 1 2 :l 3 :ld 4 5 :l 6 :ld 7 :ld)
+(r-pairoff-pre '(:l 1 2 :l 3 :ld :l 6 :ld 7 :ld 8 9) #{:l} :ld)       ;-> (:l 1 2 :l 3 :ld :l 6 :ld 7 :ld)
+(r-pairoff-pre '(:l 1 2 :l 3 :ld :l 6 :ld :ld 8 9) #{:l} :ld)         ;-> (:l 1 2 :l 3 :ld :l 6 :ld :ld)
+(r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld 8 9) #{:l} :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
+(r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) #{:l} :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
 
-(time (r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) :l :ld))
+(time (r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) #{:l} :ld))
 
 
-(r-pairoff-post '() :l :ld)
-(r-pairoff-post nil :l :ld)
-(r-pairoff-post nil :l :ld)
-(r-pairoff-post '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) :l :ld)
-(r-pairoff-post '(:l 4 5 :ld 6 7 8)        :l :ld)
-(r-pairoff-post '(:l :ld 2 :l 6 :ld :ld :ld :l 7 8) :l :ld)
+(r-pairoff-post '() #{:l} :ld)
+(r-pairoff-post nil #{:l} :ld)
+(r-pairoff-post nil #{:l} :ld)
+(r-pairoff-post '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) #{:l} :ld)
+(r-pairoff-post '(:l 4 5 :ld 6 7 8)        #{:l} :ld)
+(r-pairoff-post '(:l :ld 2 :l 6 :ld :ld :ld :l 7 8) #{:l} :ld)
 
 
 (def symlookup
@@ -199,23 +208,32 @@
    7 7
    8 8
    9 9
-   10 10     })
+   10 10
+   11 11})
 
 
 (defn genprog [partial spec symlookup]
-  "v1.0 correct for lists generation with :l and :ld"
+  "v1.2 correct for lists generation with :l, :v and :ld"
   ;(println "partial:" partial " spec:" spec " depth:"depth)
   (let [speclookup   (symlookup (first spec))
         specf        (first spec)
-        spec_pre_ld  (r-pairoff-pre spec :l :ld)
+        spec_pre_ld  (if (contains? #{:l :v} specf)
+                         (r-pairoff-pre spec #{:l :v} :ld)
+                          '())
         spec_past_ld (let [len (count spec_pre_ld)] (drop len spec))
         ]
    (cond 
     (= specf :l)     
         (genprog
              (cons 
-               (genprog (list) (rest spec_pre_ld) symlookup)
-      ;; (vec  (genprog (list) (rest spec_pre_ld) symlookup))   ;; vector version
+               (genprog (list) (rest spec_pre_ld) symlookup)          ;;list version
+               partial
+               )
+         spec_past_ld symlookup)
+    (= specf :v)     
+        (genprog
+             (cons 
+               (vec (genprog (list) (rest spec_pre_ld) symlookup))   ;; vector version
                partial
                )
          spec_past_ld symlookup)
@@ -236,13 +254,19 @@
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
 
+(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
+(genprog nil '(1 2 3 4 :v :l 6 :l  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
+
 
 (genprog nil '(:l :ld :ld 1) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
 (genprog nil '(1 ) symlookup)
 (genprog nil '(1 2) symlookup)
 
 (genprog nil '(2 2 5) symlookup)
+(genprog nil '(2) symlookup)
 
+(list   '(2))
+(identity 2)
 
 (vec '(:a 1 :b 2))
 (apply hash-map '(:a 1 :b 2))

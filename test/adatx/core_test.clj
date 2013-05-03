@@ -21,7 +21,30 @@
    11 11 })
 
 (deftest genprog-test
-  (testing "genprog for correct behaviour"
+  (testing "genprog for correct behaviour with :l"
+    (is (= 
+          (genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup-nums)   
+          '(10 (9 8 (7) 6 5) 4 3 2 1)
+          ))
+    (is (=
+          (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup-nums)
+          '(9 8 (7 6 5) 4 3 2 1)
+          ))
+    (is (= 
+          (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup-nums)
+          '(9 8 (7 6 5) 4 3 2 1)
+          ))
+    (is (= 
+          (genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 ) symlookup-nums)  
+          '(((9 8 (7 6 5))) 4 3 2 1)
+          ))
+    (is (=
+          (genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 :ld 10 11) symlookup-nums) 
+          '((11 10 (9 8 (7 6 5))) 4 3 2 1)
+          ))
+  )
+  
+  (testing "genprog for correct behaviour with :v"
     (is (= 
           (genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup-nums)   
           '(10 (9 8 (7) 6 5) 4 3 2 1)
