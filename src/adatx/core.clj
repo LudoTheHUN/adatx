@@ -429,8 +429,15 @@
 ;(frequencies (map count (take 100000 (iterate spec_iter_defed  '(1 1 1 1 1 1 1)   ))))
 ;{7 78125, 8 21875}     ;;what would be the saving if we skipped the itterator when depth went below base level?
 ;{7 37472, 8 62528}     ;;with non silly specs
+
+
 ;(time (frequencies (pmap count (take 10000000 (iterate spec_iter_defed  '(1)   )))))
+;;"Elapsed time: 245897.282269 msecs"  (on the thinkpad)
+;;{1 4, 2 16, 3 72, 4 336, 5 1600, 6 7712, 7 37472, 8 183104, 9 898432, 10 4422144, 11 4449108} 
 ;(time (frequencies (map count (take 10000000 (iterate spec_iter_defed  '(1)   )))))
+;;"Elapsed time: 157034.765806 msecs"   (on the thinkpad)
+;;;{1 4, 2 16, 3 72, 4 336, 5 1600, 6 7712, 7 37472, 8 183104, 9 898432, 10 4422144, 11 4449108}
+
 (genprog nil
    (last (take 170000 (iterate spec_iter_defed  '(1)   )))
   symlookup)
