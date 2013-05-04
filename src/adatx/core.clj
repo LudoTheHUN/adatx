@@ -219,6 +219,7 @@
   "v1.2 correct for lists generation with :l, :v and :ld
    consider adding :m for literal map support, will need to deal with bad pairs
    consider adding :s for literal set support, will need to deal with duplicate keys
+   Need to reverse order
 "
   ;(println "partial:" partial " spec:" spec " depth:"depth)
   (let [speclookup   (symlookup (first spec))
@@ -255,7 +256,7 @@
 
 
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 11 ) symlookup)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
@@ -279,7 +280,7 @@
 ;;TODO 
 
 (defn spec_iterate [spec keylist]
-  "returns next spec   where spec is a list, each element is in the ordered list given by symlookup
+  "v1.0 returns next spec   where spec is a list, each element is in the ordered list given by symlookup
    iterating up on the left first
    very basic, will generate specs for silly lisp forms"
  (let [specf (first spec)
@@ -295,6 +296,27 @@
   )
 )
 
+
+(defn spec_iterate [spec keylist]
+  "v1.1 WIP returns next spec   where spec is a list, each element is in the ordered list given by symlookup
+   iterating up on the left first
+   will use depth to prevent :ld below base level
+   WIP"
+ (let [specf (first spec)
+       next  (second (drop-while #(not(= % specf))  keylist))  ]
+   (cond 
+     next    ;first number is going up by one
+       (cons next (rest spec))
+     (not specf)  ;;we need to grow the spec, 
+       (cons (first keylist) spec)
+     :else   ;first number it ticking round, rest of the numbers get to tick up by one if need be.. 
+       (cons (first keylist) (spec_iterate (rest spec) keylist))     
+       )
+  )
+)
+
+
+
 (spec_iterate '(:v 2 3 :l)  '(1 2 :ld :l :v))
 (spec_iterate '(:v :v :v :l)  '(1 2 :ld :l :v))
 (spec_iterate '(:v :v :v :v)  '(1 2 :ld :l :v))
@@ -302,14 +324,14 @@
 (spec_iterate '(1)  '(1 2 :ld :l :v))
 
 (defn spec_iterate_f [keylist]
-  (fn [x] (spec_iterate x  keylist)))
+  (fn [x] (reverse (spec_iterate (reverse x)  keylist))))
 
+
+;;NOTE we want to tick on the right, so that the base of the function stays stable.
 
 ;(pprint (take 100 (iterate (spec_iterate_f '(1 2 :ld :l :v))  '(1 :v :v :v)  )))
-
-(def spec_iter_defed (spec_iterate_f '(1 2 :ld :l :v)))
-
-;;(last (take 1000000 (iterate spec_iter_defed  '(1)  ))) ; ~1200ms on the thinkpad
+(def spec_iter_defed (spec_iterate_f '(1 2 :l :v :ld)))
+;;(last (take 10000 (iterate spec_iter_defed  '(1)  ))) ; ~1200ms on the thinkpad
 
 (genprog nil 
          (last 
@@ -317,9 +339,19 @@
                )
          symlookup)
 
+
+(take 5 (iterate spec_iter_defed  '(1 :v 2 2 :ld :l 2 2 :ld)  ))
+
+;;BUG  we are fast itterating on the left, but we expect genprog to be stable on the 
+
 (time
- (map (fn [x] (genprog nil x symlookup))  (take 100 (iterate spec_iter_defed  '(1)  )))
+ (pprint 
+   (map (fn [x] (genprog nil (reverse x) symlookup))  (take 10 (iterate spec_iter_defed  '(1 :v :v 1)  ))  )
+ )
 )
+
+(pprint (map (fn [x] (genprog nil x symlookup))  (take 5 (iterate spec_iter_defed  '(2 :v 2 2 :ld :v 2 2 :ld 1)   ))))
+
 
 (/ (* 10000 0.05) 60 60)
 
@@ -343,10 +375,8 @@
 
 
 
-
- (add_timing (my_eval22 (genprog nil '(2 2 5) symlookup)))
- (add_timing (my_eval22 '(+ 2 a)))
-
+(add_timing (my_eval22 (genprog nil '(2 2 5) symlookup)))
+(add_timing (my_eval22 '(+ 2 a)))
 (class
   (class (:errormsg  (add_timing (my_eval22 '(+ 2 a))))))
 
