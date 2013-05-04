@@ -219,8 +219,7 @@
   "v1.2 correct for lists generation with :l, :v and :ld
    consider adding :m for literal map support, will need to deal with bad pairs
    consider adding :s for literal set support, will need to deal with duplicate keys
-   Need to reverse order
-"
+  "
   ;(println "partial:" partial " spec:" spec " depth:"depth)
   (let [speclookup   (symlookup (first spec))
         specf        (first spec)
@@ -255,23 +254,24 @@
 
 
 
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 :ld 10 ) symlookup)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup)  
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 :ld 10 ) symlookup)   
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)  
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
 (genprog nil '(1 2 3 4 :v :l 6 :l  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
-(genprog nil '(:l :ld :ld 1) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :v :l 6  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
+(genprog nil '(:l :ld :ld 1) symlookup)   
 (genprog nil '(1 ) symlookup)
 (genprog nil '(1 2) symlookup)
 (genprog nil '(2 2 5) symlookup)
 (genprog nil '(2) symlookup)
 (genprog nil '(:ld) symlookup)
 
-(genprog nil '(1 :l 2 :ld 3 :l 1) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
-(genprog nil '(1 2 :ld) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 :l 2 :ld 3 :l 1) symlookup)   
+(genprog nil '(1 2 :ld) symlookup)   
 
 
 
@@ -285,7 +285,7 @@
 ;;TODO 
 
 (defn spec_iterate [spec keylist]
-  "v1.0 returns next spec   where spec is a list, each element is in the ordered list given by symlookup
+  "DEPRECATE v1.0 returns next spec   where spec is a list, each element is in the ordered list given by symlookup
    iterating up on the left first
    very basic, will generate specs for silly lisp forms"
  (let [specf (first spec)
@@ -301,35 +301,104 @@
   )
 )
 
+;;keylist should be (concat (keys speclookup)  '(:l :v :ld)), assuming :l :v :ld are not in the key list
+;; :ld needs to be last
 
-(defn spec_iterate [spec keylist]
-  "v1.1 WIP returns next spec   where spec is a list, each element is in the ordered list given by symlookup
+(defn spec_iterate [spec keylist depth]
+  "DEPRECATE v1.1 WIP returns next spec   where spec is a list, each element is in the ordered list given by symlookup
    iterating up on the left first
-   will use depth to prevent :ld below base level
-   WIP"
+   will use depth to prevent :ld below base level, skip it as the next iteration target
+   WIP - this is broken"
  (let [specf (first spec)
-       next  (second (drop-while #(not(= % specf))  keylist))  ]
-   (cond 
-     next    ;first number is going up by one
+       nex  (second (drop-while #(not(= % specf))  keylist)) 
+       next (if (and (= depth 0) (= nex :ld))
+              nil
+              nex)]
+   (cond
+     next    ;first number is going up by one  ; can not allow :ld if depth is 0
        (cons next (rest spec))
      (not specf)  ;;we need to grow the spec, 
        (cons (first keylist) spec)
      :else   ;first number it ticking round, rest of the numbers get to tick up by one if need be.. 
-       (cons (first keylist) (spec_iterate (rest spec) keylist))     
+       (cons (first keylist) (spec_iterate (rest spec) keylist  (+ depth 
+                                                                   (cond
+                                                                      (contains? #{:l :v} nex) 1 
+                                                                      (= next :ld) -1
+                                                                      :else 0))
+                             )
        )
-  )
+   )
+ )
 )
 
 
+(defn spec-depth-pair [spec]
+  "returns pairs of the specs and the depth at that spec item"
+  (loop [partial '() spec spec depth 0]
+    (if (empty? spec)
+      (reverse partial)
+      (let [specf (first spec)]
+        (recur (cons (list specf depth)  partial)
+               (rest spec)
+               (+ depth (cond 
+                          (contains? #{:l :v} specf) 1
+                          (= specf :ld) -1
+                           :else 0))
+       )))))
+  
+(spec-depth-pair '(:l :l 1 :ld :ld  1))
+(spec-depth-pair '(:l 1 :ld :ld  1))
 
-(spec_iterate '(:v 2 3 :l)  '(1 2 :ld :l :v))
-(spec_iterate '(:v :v :v :l)  '(1 2 :ld :l :v))
-(spec_iterate '(:v :v :v :v)  '(1 2 :ld :l :v))
-(spec_iterate '(:v :v :v :v)  '(1 2 :ld :l :v))
-(spec_iterate '(1)  '(1 2 :ld :l :v))
+(defn spec_iterate [spec keylist]
+  "v2.0 WIP depth aware, iterate on the right, grow on the left, just like normal numbers"
+ (let [spec-depth   (reverse (spec-depth-pair spec))]
+    (loop [partial '() spec-depth spec-depth carry-r? true]
+      (if (empty? spec-depth)
+        (if carry-r? 
+          (cons (first keylist) partial)
+          partial)
+        (let [specf (ffirst spec-depth)
+              depth  (second (first spec-depth))
+              nex    (second (drop-while #(not(= % specf))  keylist))
+              carry? (or (and (= depth 0) (= nex :ld) carry-r?)
+                         (and (nil? nex) carry-r?)
+                         (and (= partial '()) (= nex :ld))
+                         )
+              next   (if carry-r?
+                            (if carry? (first keylist) nex) 
+                            specf)
+]
+          (recur          
+                     ;;grow on the left to carry over
+                  (cons next partial)
+                  (rest spec-depth)
+                  carry?
+                  )
+)))))
+
+
+
+(= (spec_iterate '(1 2 1 1)      '(1 2 :l :v :ld))     '(1 2 1 2))
+(= (spec_iterate '(1 2 2 2)      '(1 2 :l :v :ld))     '(1 2 2 :l))
+(= (spec_iterate '(1 2 2 :v)     '(1 2 :l :v :ld))     '(1 2 :l 1))
+(= (spec_iterate '(1 2 2 :ld)    '(1 2 :l :v :ld))     '(1 2 :l 1))
+(= (spec_iterate '(:v :v :v :l)  '(1 2 :l :v :ld))     '(:v :v :v :v))
+(= (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))     '(:v :v :ld 1))
+(= (spec_iterate '(1 1 :v :v)    '(1 2 :l :v :ld))     '(1 2 1 1))
+(= (spec_iterate '(:v :v :ld :v) '(1 2 :l :v :ld))     '(:v :ld 1 1))
+(= (spec_iterate '(:v :ld :v :v) '(1 2 :l :v :ld))     '(1 1 1 1 1))  ;;needs to grow
+(= (spec_iterate '(:v :v :ld :v :v) '(1 2 :l :v :ld))  '(:v :v :ld :ld 1))
+(= (spec_iterate '(:v 1 :ld :l :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :v 1 1 1))
+(= (spec_iterate '(:v 1 :ld :l 2 :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :l :l 1 1 1))
+
+
+
+(spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))
+(spec_iterate '(1 :v 2 :ld)  '(1 2 :l :v :ld))
+(spec_iterate '(1)  '(1 2 :ld :l :v) )
 
 (defn spec_iterate_f [keylist]
-  (fn [x] (reverse (spec_iterate (reverse x)  keylist))))
+  (fn [x] (spec_iterate x  keylist )))
 
 
 ;;NOTE we want to tick on the right, so that the base of the function stays stable.
@@ -340,23 +409,31 @@
 
 (genprog nil 
          (last 
-           (take 1000000 (iterate spec_iter_defed  '(1)  ))
+           (take 100 (iterate spec_iter_defed  '()  ))
                )
          symlookup)
 
 
 (take 5 (iterate spec_iter_defed  '(1 :v 2 2 :ld :l 2 2 :ld)  ))
 
-;;BUG  we are fast itterating on the left, but we expect genprog to be stable on the 
 
 (time
  (pprint 
-   (map (fn [x] (genprog nil (reverse x) symlookup))  (take 10 (iterate spec_iter_defed  '(1 :v :v 1)  ))  )
+   (map (fn [x] (genprog nil x symlookup))  (take 10 (iterate spec_iter_defed  '(1 :v :v 1)  ))  )
  )
 )
 
-(pprint (map (fn [x] (genprog nil x symlookup))  (take 5 (iterate spec_iter_defed  '(2 :v 2 2 :ld :v 2 2 :ld 1)   ))))
+(pprint (map (fn [x] (genprog nil x symlookup))  (take 100 (iterate spec_iter_defed  '(2 :v 2 2 :ld :l 1 1 1)   ))))
 
+
+;(frequencies (map count (take 100000 (iterate spec_iter_defed  '(1 1 1 1 1 1 1)   ))))
+;{7 78125, 8 21875}     ;;what would be the saving if we skipped the itterator when depth went below base level?
+;{7 37472, 8 62528}     ;;with non silly specs
+;(time (frequencies (pmap count (take 10000000 (iterate spec_iter_defed  '(1)   )))))
+;(time (frequencies (map count (take 10000000 (iterate spec_iter_defed  '(1)   )))))
+(genprog nil
+   (last (take 170000 (iterate spec_iter_defed  '(1)   )))
+  symlookup)
 
 (/ (* 10000 0.05) 60 60)
 
