@@ -64,46 +64,34 @@
   (testing "genprog for correct behaviour with :l"
     (is (= 
           (genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup-nums)   
-          '(10 (9 8 (7) 6 5) 4 3 2 1)
+          '(1 2 3 4 (5 6 (7) 8 9) 10)
           ))
     (is (=
           (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup-nums)
-          '(9 8 (7 6 5) 4 3 2 1)
-          ))
-    (is (= 
-          (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup-nums)
-          '(9 8 (7 6 5) 4 3 2 1)
+          '(1 2 3 4 (5 6 7) 8 9)
           ))
     (is (= 
           (genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 ) symlookup-nums)  
-          '(((9 8 (7 6 5))) 4 3 2 1)
+          '(1 2 3 4 (((5 6 7) 8 9)))
           ))
     (is (=
           (genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 :ld 10 11) symlookup-nums) 
-          '((11 10 (9 8 (7 6 5))) 4 3 2 1)
+          '(1 2 3 4 (((5 6 7) 8 9) 10 11))
           ))
   )
   
   (testing "genprog for correct behaviour with :v"
     (is (= 
-          (genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup-nums)   
-          '(10 (9 8 (7) 6 5) 4 3 2 1)
+          (genprog nil '(1 2 3 4 :v 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup-nums)   
+          '(1 2 3 4 [5 6 (7) 8 9] 10)
           ))
     (is (=
-          (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup-nums)
-          '(9 8 (7 6 5) 4 3 2 1)
+          (genprog nil '(:v 5 6 7 :ld 8 9 ) symlookup-nums)
+          '([5 6 7] 8 9)
           ))
     (is (= 
-          (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup-nums)
-          '(9 8 (7 6 5) 4 3 2 1)
-          ))
-    (is (= 
-          (genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 ) symlookup-nums)  
-          '(((9 8 (7 6 5))) 4 3 2 1)
-          ))
-    (is (=
-          (genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 :ld 10 11) symlookup-nums) 
-          '((11 10 (9 8 (7 6 5))) 4 3 2 1)
+          (genprog nil '(:v :l :v :ld 1) symlookup-nums)
+          '([([] 1)])
           ))
   )
 )

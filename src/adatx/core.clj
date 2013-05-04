@@ -250,7 +250,7 @@
          )   ;; the sale level add a symbol
            (genprog (cons speclookup partial)  (rest spec) symlookup)
      :else
-        (reverse partial))
+        (reverse partial))   ;NOTE , this will be interesting when we add maps and sets...
   ))
 
 
