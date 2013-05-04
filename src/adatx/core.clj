@@ -250,13 +250,14 @@
          )   ;; the sale level add a symbol
            (genprog (cons speclookup partial)  (rest spec) symlookup)
      :else
-        partial)
+        (reverse partial))
   ))
 
 
 
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
 (genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 :ld 10 ) symlookup)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
 (genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
@@ -268,6 +269,10 @@
 (genprog nil '(2 2 5) symlookup)
 (genprog nil '(2) symlookup)
 (genprog nil '(:ld) symlookup)
+
+(genprog nil '(1 :l 2 :ld 3 :l 1) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 :ld) symlookup)   ; '(9 8 (7 6 5) 4 3 2 1)
+
 
 
 (list   '(2))
