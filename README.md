@@ -1,6 +1,6 @@
 # adatx
 
-A Clojure library designed for Automatic Design of Algorithms Through X.
+A Clojure library for Automatic Design of Algorithms Through X.
 
 Initially X will be a brute force search through the space of all programs.
 

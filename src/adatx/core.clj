@@ -6,20 +6,28 @@
 
 ;;TODO
 ;inspect correct arrities
-;create known function store
+;DONE create known function store - symlookup
 ;create teacher in-out pairs
 ;DONE create valid s-expression builder
   ;DONE numbering system to generate expressions?
 ;DONE create safe, execution time aware execute function
-;create brute force strategy
-   ;create itterator for s-builder
+;DONE create brute force strategy
+   ;DONE create itterator for spec-builder
 
+;Consider a spec comparator function...
+
+;reseach core.logic to see if logic programs count be found this way
 ;;DONE Setting up sandbox in clojail
 
 
-;;(sb '(+ 1 2))
+;;(time (sb '(+ 1 2)))
+;;(time (+ 1 2))
+;;(time (eval '(+ 1 2)))
+;;(time(deref(future (+ 1 2))))
+;;(time(deref(future (eval '(+ 1 2)))))
+;;(time(deref(future (sb   '(+ 1 2)))))
+;; (* 6000 60 24)
 ;   (ns-publics 'adatx.core)
-(def willthissimbolsurvie? :foo)
 (def tester [(blacklist-symbols #{'alter-var-root})
              (blacklist-objects [java.lang.Thread])]) ; Create a blacklist.
 (def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
@@ -77,14 +85,14 @@
 
 (defn my_eval22 [body]     ;;function version also works, but breaks the :quoted key, which is not important
   (let [fut (future
-               {:eval-sb   (sb body)
+               {:eval-sb   (sb body)  ;sandboxed evaluation
                 :expr    body 
                 :quoted 'body})
         ans (try (deref fut
                      50 {:timeout 50 :expr    body :quoted 'body :error 1})
                   (catch Exception e {:error 1 :errormsg e     :expr    body :quoted 'body}))
          ]
-     ;(future-cancel fut#)
+     ;(future-cancel fut)
      ans
    ))
 
@@ -117,6 +125,7 @@
 (count codesinpet)
 (count (flatten codesinpet))
 (count (str codesinpet))
+;better estiate from the spec list
 
 
 
@@ -318,24 +327,7 @@
 
 
 
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
-(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup)  
-(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 :ld 10 ) symlookup)   
-(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)  
-(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
-(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
-(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
-(genprog nil '(1 2 3 4 :v :l 6 :l  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
-(genprog nil '(1 2 3 4 :v :l 6  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
-(genprog nil '(:l :ld :ld 1) symlookup)   
-(genprog nil '(1 ) symlookup)
-(genprog nil '(1 2) symlookup)
-(genprog nil '(2 2 5) symlookup)
-(genprog nil '(2) symlookup)
-(genprog nil '(:ld) symlookup)
-
-(genprog nil '(1 :l 2 :ld 3 :l 1) symlookup)   
-(genprog nil '(1 2 :ld) symlookup)   
+;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
 
 
 

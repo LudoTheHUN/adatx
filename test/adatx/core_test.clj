@@ -95,3 +95,24 @@
           ))
   )
 )
+
+
+(deftest spec_iterate-test
+  (testing "spec_iterate"
+    (is (= (spec_iterate '(1 2 2 2)      '(1 2 :l :v :ld))     '(1 2 2 :l)))
+    (is (= (spec_iterate '(1 2 2 :v)     '(1 2 :l :v :ld))     '(1 2 :l 1)))
+    (is (= (spec_iterate '(1 2 2 :ld)    '(1 2 :l :v :ld))     '(1 2 :l 1)))
+    (is (= (spec_iterate '(:v :v :v :l)  '(1 2 :l :v :ld))     '(:v :v :v :v)))
+    (is (= (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))     '(:v :v :ld 1)))
+    (is (= (spec_iterate '(1 1 :v :v)    '(1 2 :l :v :ld))     '(1 2 1 1)))
+    (is (= (spec_iterate '(:v :v :ld :v) '(1 2 :l :v :ld))     '(:v :ld 1 1)))
+    (is (= (spec_iterate '(:v :ld :v :v) '(1 2 :l :v :ld))     '(1 1 1 1 1)))  ;;needs to grow
+    (is (= (spec_iterate '(:v :v :ld :v :v) '(1 2 :l :v :ld))  '(:v :v :ld :ld 1)))
+    (is (= (spec_iterate '(:v 1 :ld :l :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :v 1 1 1)))
+    (is (= (spec_iterate '(:v 1 :ld :l 2 :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :l :l 1 1 1)))
+    )
+  )
+        
+        
+        
+        
