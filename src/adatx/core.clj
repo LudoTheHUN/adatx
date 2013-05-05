@@ -123,14 +123,14 @@
 
 (defn pairoff-pre [list accum match matchd depth]
   "finds the list upto the point the match and matched are paired off
-   match is a set of keys matchd like 
+   match is a set of keys matchd eg: 
    :l for list 
    :v for vector
    :m for map
    :s for set
    :r for regex
    and maybe other literals
-   is just the one closing off key, typically :ld"
+   matchd is just the one closing off key, typically :ld , which is where list, vectors etc are closed off"
   (cond 
      (and (empty? depth) (not (empty? accum)))
        accum
@@ -159,34 +159,9 @@
     (let [len (count (pairoff-pre list nil match matchd nil))]
       (drop len list)))
      
-(r-pairoff-pre '() #{:l} :ld)
-(r-pairoff-pre nil #{:l} :ld)
-(r-pairoff-pre '(1 2 3 :l 4 5 6 7 8)  #{:l} :ld)      ;-> '()
-(r-pairoff-pre '(1 2 3 :l 4 5 :ld 6 7 8) #{:l}:ld)  ;-> '()
-(r-pairoff-pre '(:l 4 5 :ld 6 7 8)       #{:l}:ld)  ;-> '(:l 4 5 :ld)
-(r-pairoff-pre '(:l 4 :l 5 :ld 6 :ld 7 8) #{:l} :ld)  ;-> '(:l 4 :l 5 :ld 6 :ld)
-(r-pairoff-pre '(:l 4 5 :ld 6 :ld 7 8) #{:l} :ld)     ;-> '(:l 4 5 :ld)
-(r-pairoff-pre '(:l 4 5 :l 6 :ld 7 8) #{:l} :ld)      ; -> (:l 4 5 :l 6 :ld 7 8)
-(r-pairoff-pre '(:l 4 5 :l :l 6 :ld :ld :ld 7 8) #{:l} :ld)     ; (:l 4 5 :l :l 6 :ld :ld :ld)
-(r-pairoff-pre '(:l :l :l :l 6 :ld :ld :ld :ld 7 8) #{:l} :ld)  ; (:l :l :l :l 6 :ld :ld :ld :ld)
-(r-pairoff-pre '(:l :l :l 6 :ld :ld :ld :l 7 8) #{:l} :ld)      ;-> (:l :l :l 6 :ld :ld :ld)
-(r-pairoff-pre '(:l :ld 2 :l 6 :ld :ld :ld :l 7 8) #{:l} :ld)   ;->  (:l :ld)
-(r-pairoff-pre '(:l :ld :ld :ld :ld :l 7 8) #{:l} :ld)          ;->  (:l :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :ld 4 5 :l 6 :ld 7 :ld 8 9) #{:l} :ld)   ;-> (:l 1 2 :l 3 :ld 4 5 :l 6 :ld 7 :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :ld :l 6 :ld 7 :ld 8 9) #{:l} :ld)       ;-> (:l 1 2 :l 3 :ld :l 6 :ld 7 :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :ld :l 6 :ld :ld 8 9) #{:l} :ld)         ;-> (:l 1 2 :l 3 :ld :l 6 :ld :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld 8 9) #{:l} :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
-(r-pairoff-pre '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) #{:l} :ld)  ;-> (:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld)
-
-(r-pairoff-post '() #{:l} :ld)
-(r-pairoff-post nil #{:l} :ld)
-(r-pairoff-post nil #{:l} :ld)
-(r-pairoff-post '(:l 1 2 :l 3 :l :ld :l :ld 6 :ld :ld :ld 8 9) #{:l} :ld)
-(r-pairoff-post '(:l 4 5 :ld 6 7 8)        #{:l} :ld)
-(r-pairoff-post '(:l :ld 2 :l 6 :ld :ld :ld :l 7 8) #{:l} :ld)
-
 
 (def symlookup
+  "example lookup map"
   {1 'hello
    2 2
    3 "are"
@@ -199,9 +174,9 @@
    10 ''(sdf sdfwe wer)     })
 
 (def symlookup
-  {:l :listgen
-   :v :vectorgen
-   :ld :depthdown
+  {:l :listgen     ;reserver for iterator
+   :v :vectorgen   ;reserver for iterator
+   :ld :depthdown  ;reserver for iterator
    1 1
    2 2
    3 3
@@ -219,6 +194,7 @@
   "v1.2 correct for lists generation with :l, :v and :ld
    consider adding :m for literal map support, will need to deal with bad pairs
    consider adding :s for literal set support, will need to deal with duplicate keys
+   It drops data if we :ld past lowest level
   "
   ;(println "partial:" partial " spec:" spec " depth:"depth)
   (let [speclookup   (symlookup (first spec))
@@ -254,6 +230,94 @@
 
 
 
+(defn spec_iterate_dumb [spec keylist]
+  "DO NOT USE v1.0 returns next spec   where spec is a list, each element is in the ordered list given by symlookup
+   iterating up on the left first
+   very basic, will generate specs for silly lisp forms that go lower then base level with too many :ld"
+ (let [specf (first spec)
+       next  (second (drop-while #(not(= % specf))  keylist))  ]
+   (cond 
+     next    ;first number is going up by one
+       (cons next (rest spec))
+     (not specf)  ;;we need to grow the spec, 
+       (cons (first keylist) spec)
+     :else   ;first number it ticking round, rest of the numbers get to tick up by one if need be.. 
+       (cons (first keylist) (spec_iterate_dumb (rest spec) keylist))     
+       )
+  )
+)
+
+
+
+
+(defn spec-depth-pair [spec]
+  "returns pairs of the specs and the depth at that spec item
+   supports :l :v :ld only "
+  (loop [partial '() spec spec depth 0]
+    (if (empty? spec)
+      (reverse partial)
+      (let [specf (first spec)]
+        (recur (cons (list specf depth)  partial)
+               (rest spec)
+               (+ depth (cond 
+                          (contains? #{:l :v} specf) 1
+                          (= specf :ld) -1
+                           :else 0))
+       )))))
+  
+(spec-depth-pair '(:l :l 1 :ld :ld  1))
+(spec-depth-pair '(:l 1 :ld :ld  1))
+(spec-depth-pair '(:l 1 :v :ld  1))
+
+
+(defn spec_iterate [spec keylist]
+  "v2.0 Iterate on the right, grows on the left, just like normal numbers, but with special carrying for :ld symbol.
+   Depth aware based on spec-depth-pair function.
+   carrying aware, does not produce silly specs iterations. 
+   Should cover the space of all program specs with each correct program being generated once and only once.
+   keylist has to have :l :v at the end, and :ld at the very end, althugh they are optional if we do not want to
+   generate programs with list, vectors (:l :v), and or if never want to end these (:ld)"
+ (let [spec-depth   (reverse (spec-depth-pair spec))]
+    (loop [partial '() spec-depth spec-depth carry-r? true]
+      (if (empty? spec-depth)
+        (if carry-r? 
+          (cons (first keylist) partial)   ;we are on the last number and we need to carry, hence grow the spec
+          partial)  
+        (let [specf  (ffirst spec-depth)
+              depth  (second (first spec-depth))
+              nex    (second (drop-while #(not(= % specf))  keylist))
+              carry? (or (and (= depth 0) (= nex :ld) carry-r?)
+                         (and (nil? nex) carry-r?)
+                         (and (= partial '()) (= nex :ld))
+                         )
+              next   (if carry-r?
+                            (if carry? (first keylist) nex) 
+                            specf)]
+          (recur          
+                     ;;grow on the left to carry over
+                  (cons next partial)
+                  (rest spec-depth)
+                  carry?
+                  )
+)))))
+
+
+;;TODO write tests with these and more
+(= (spec_iterate '(1 2 2 2)      '(1 2 :l :v :ld))     '(1 2 2 :l))
+(= (spec_iterate '(1 2 2 :v)     '(1 2 :l :v :ld))     '(1 2 :l 1))
+(= (spec_iterate '(1 2 2 :ld)    '(1 2 :l :v :ld))     '(1 2 :l 1))
+(= (spec_iterate '(:v :v :v :l)  '(1 2 :l :v :ld))     '(:v :v :v :v))
+(= (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))     '(:v :v :ld 1))
+(= (spec_iterate '(1 1 :v :v)    '(1 2 :l :v :ld))     '(1 2 1 1))
+(= (spec_iterate '(:v :v :ld :v) '(1 2 :l :v :ld))     '(:v :ld 1 1))
+(= (spec_iterate '(:v :ld :v :v) '(1 2 :l :v :ld))     '(1 1 1 1 1))  ;;needs to grow
+(= (spec_iterate '(:v :v :ld :v :v) '(1 2 :l :v :ld))  '(:v :v :ld :ld 1))
+(= (spec_iterate '(:v 1 :ld :l :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :v 1 1 1))
+(= (spec_iterate '(:v 1 :ld :l 2 :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :l :l 1 1 1))
+
+
+
+
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
 (genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup)  
 (genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 :ld 10 ) symlookup)   
@@ -282,115 +346,8 @@
 (hash-map :a 1 :b 2)
 
 
-;;TODO 
 
-(defn spec_iterate [spec keylist]
-  "DEPRECATE v1.0 returns next spec   where spec is a list, each element is in the ordered list given by symlookup
-   iterating up on the left first
-   very basic, will generate specs for silly lisp forms"
- (let [specf (first spec)
-       next  (second (drop-while #(not(= % specf))  keylist))  ]
-   (cond 
-     next    ;first number is going up by one
-       (cons next (rest spec))
-     (not specf)  ;;we need to grow the spec, 
-       (cons (first keylist) spec)
-     :else   ;first number it ticking round, rest of the numbers get to tick up by one if need be.. 
-       (cons (first keylist) (spec_iterate (rest spec) keylist))     
-       )
-  )
-)
-
-;;keylist should be (concat (keys speclookup)  '(:l :v :ld)), assuming :l :v :ld are not in the key list
-;; :ld needs to be last
-
-(defn spec_iterate [spec keylist depth]
-  "DEPRECATE v1.1 WIP returns next spec   where spec is a list, each element is in the ordered list given by symlookup
-   iterating up on the left first
-   will use depth to prevent :ld below base level, skip it as the next iteration target
-   WIP - this is broken"
- (let [specf (first spec)
-       nex  (second (drop-while #(not(= % specf))  keylist)) 
-       next (if (and (= depth 0) (= nex :ld))
-              nil
-              nex)]
-   (cond
-     next    ;first number is going up by one  ; can not allow :ld if depth is 0
-       (cons next (rest spec))
-     (not specf)  ;;we need to grow the spec, 
-       (cons (first keylist) spec)
-     :else   ;first number it ticking round, rest of the numbers get to tick up by one if need be.. 
-       (cons (first keylist) (spec_iterate (rest spec) keylist  (+ depth 
-                                                                   (cond
-                                                                      (contains? #{:l :v} nex) 1 
-                                                                      (= next :ld) -1
-                                                                      :else 0))
-                             )
-       )
-   )
- )
-)
-
-
-(defn spec-depth-pair [spec]
-  "returns pairs of the specs and the depth at that spec item"
-  (loop [partial '() spec spec depth 0]
-    (if (empty? spec)
-      (reverse partial)
-      (let [specf (first spec)]
-        (recur (cons (list specf depth)  partial)
-               (rest spec)
-               (+ depth (cond 
-                          (contains? #{:l :v} specf) 1
-                          (= specf :ld) -1
-                           :else 0))
-       )))))
-  
-(spec-depth-pair '(:l :l 1 :ld :ld  1))
-(spec-depth-pair '(:l 1 :ld :ld  1))
-
-(defn spec_iterate [spec keylist]
-  "v2.0 WIP depth aware, iterate on the right, grow on the left, just like normal numbers"
- (let [spec-depth   (reverse (spec-depth-pair spec))]
-    (loop [partial '() spec-depth spec-depth carry-r? true]
-      (if (empty? spec-depth)
-        (if carry-r? 
-          (cons (first keylist) partial)
-          partial)
-        (let [specf (ffirst spec-depth)
-              depth  (second (first spec-depth))
-              nex    (second (drop-while #(not(= % specf))  keylist))
-              carry? (or (and (= depth 0) (= nex :ld) carry-r?)
-                         (and (nil? nex) carry-r?)
-                         (and (= partial '()) (= nex :ld))
-                         )
-              next   (if carry-r?
-                            (if carry? (first keylist) nex) 
-                            specf)
-]
-          (recur          
-                     ;;grow on the left to carry over
-                  (cons next partial)
-                  (rest spec-depth)
-                  carry?
-                  )
-)))))
-
-
-
-(= (spec_iterate '(1 2 1 1)      '(1 2 :l :v :ld))     '(1 2 1 2))
-(= (spec_iterate '(1 2 2 2)      '(1 2 :l :v :ld))     '(1 2 2 :l))
-(= (spec_iterate '(1 2 2 :v)     '(1 2 :l :v :ld))     '(1 2 :l 1))
-(= (spec_iterate '(1 2 2 :ld)    '(1 2 :l :v :ld))     '(1 2 :l 1))
-(= (spec_iterate '(:v :v :v :l)  '(1 2 :l :v :ld))     '(:v :v :v :v))
-(= (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))     '(:v :v :ld 1))
-(= (spec_iterate '(1 1 :v :v)    '(1 2 :l :v :ld))     '(1 2 1 1))
-(= (spec_iterate '(:v :v :ld :v) '(1 2 :l :v :ld))     '(:v :ld 1 1))
-(= (spec_iterate '(:v :ld :v :v) '(1 2 :l :v :ld))     '(1 1 1 1 1))  ;;needs to grow
-(= (spec_iterate '(:v :v :ld :v :v) '(1 2 :l :v :ld))  '(:v :v :ld :ld 1))
-(= (spec_iterate '(:v 1 :ld :l :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :v 1 1 1))
-(= (spec_iterate '(:v 1 :ld :l 2 :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :l :l 1 1 1))
-
+(= (spec_iterate '(2 2 1 2)      '(1 2))     '(1 2 2 :l))
 
 
 (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))
