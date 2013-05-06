@@ -361,7 +361,7 @@
 (defn exemplar-test-list [prog-holder prog x-in]
     (list (prog_wrap prog-holder prog) x-in))
 
-(defn exemplar-test [prog-holder prog x-in y-out] 
+(defn exemplar-in [prog-holder prog x-in y-out] 
   (let [y-ans (time (my_eval22 (exemplar-test-list 
                     prog-holder
                     prog
@@ -369,12 +369,14 @@
     y-ans))
 
 (def prog-holder
-   '(fn [x] (+ 5 ::prog)))
+   '(fn [x] ::prog))
 
 (def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
 
 
-(exemplar-test prog-holder '(+ x x) 5 :goo)
+(exemplar-in prog-holder '(+ x x) 5 :goo)
+
+
 ;  (time (my_eval22 (exemplar-test-list 
 ;                   '(fn [x] (+ 4 ::prog))
 ;                   '(+ x x)
