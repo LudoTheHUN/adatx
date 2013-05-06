@@ -1,8 +1,9 @@
 (ns adatx.core
    (:use [clojail.core :only [sandbox]]
         [clojail.testers :only [blacklist-symbols blacklist-objects]]
-        [clojure.pprint])
-   )
+        [clojure.pprint]
+        [clojure.walk])
+ )
 
 ;;TODO
 ;inspect correct arrities
@@ -183,9 +184,9 @@
    10 ''(sdf sdfwe wer)     })
 
 (def symlookup
-  {:l :listgen     ;reserver for iterator
-   :v :vectorgen   ;reserver for iterator
-   :ld :depthdown  ;reserver for iterator
+  {:l :listgen     ;reserved for iterator
+   :v :vectorgen   ;reserved for iterator
+   :ld :depthdown  ;reserved for iterator
    1 1
    2 2
    3 3
@@ -274,9 +275,9 @@
                            :else 0))
        )))))
   
-(spec-depth-pair '(:l :l 1 :ld :ld  1))
-(spec-depth-pair '(:l 1 :ld :ld  1))
-(spec-depth-pair '(:l 1 :v :ld  1))
+;(spec-depth-pair '(:l :l 1 :ld :ld  1))
+;(spec-depth-pair '(:l 1 :ld :ld  1))
+;(spec-depth-pair '(:l 1 :v :ld  1))
 
 
 (defn spec_iterate [spec keylist]
@@ -311,24 +312,20 @@
 )))))
 
 
-;;TODO write tests with these and more
-(= (spec_iterate '(1 2 2 2)      '(1 2 :l :v :ld))     '(1 2 2 :l))
-(= (spec_iterate '(1 2 2 :v)     '(1 2 :l :v :ld))     '(1 2 :l 1))
-(= (spec_iterate '(1 2 2 :ld)    '(1 2 :l :v :ld))     '(1 2 :l 1))
-(= (spec_iterate '(:v :v :v :l)  '(1 2 :l :v :ld))     '(:v :v :v :v))
-(= (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))     '(:v :v :ld 1))
-(= (spec_iterate '(1 1 :v :v)    '(1 2 :l :v :ld))     '(1 2 1 1))
-(= (spec_iterate '(:v :v :ld :v) '(1 2 :l :v :ld))     '(:v :ld 1 1))
-(= (spec_iterate '(:v :ld :v :v) '(1 2 :l :v :ld))     '(1 1 1 1 1))  ;;needs to grow
-(= (spec_iterate '(:v :v :ld :v :v) '(1 2 :l :v :ld))  '(:v :v :ld :ld 1))
-(= (spec_iterate '(:v 1 :ld :l :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :v 1 1 1))
-(= (spec_iterate '(:v 1 :ld :l 2 :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :l :l 1 1 1))
-
-
-
-
 ;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
+;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) {}) 
 
+(defn spec_iterate_f [keylist]
+  "iterator maker function"
+  (fn [x] (spec_iterate x  keylist )))
+
+;
+(take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '()  ))
+
+
+(def spec_iter_defed 
+ "example final itterator with a fully qualified keylist" 
+  (spec_iterate_f '(1 2 :l :v :ld)))
 
 
 (list   '(2))
@@ -337,24 +334,123 @@
 (apply hash-map '(:a 1 :b 2))
 (hash-map :a 1 :b 2)
 
-
-
 (= (spec_iterate '(2 2 1 2)      '(1 2))     '(1 2 2 :l))
-
 
 (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))
 (spec_iterate '(1 :v 2 :ld)  '(1 2 :l :v :ld))
 (spec_iterate '(1)  '(1 2 :ld :l :v) )
 
-(defn spec_iterate_f [keylist]
-  (fn [x] (spec_iterate x  keylist )))
+
+(defn genprogs1 [howmany startspec keylist symlookup]   ;;keylist could be determined from symlookup  
+  (map (fn [x] (genprog nil x symlookup))
+    (take howmany (iterate (spec_iterate_f keylist)  startspec ))))
 
 
-;;NOTE we want to tick on the right, so that the base of the function stays stable.
 
-;(pprint (take 100 (iterate (spec_iterate_f '(1 2 :ld :l :v))  '(1 :v :v :v)  )))
-(def spec_iter_defed (spec_iterate_f '(1 2 :l :v :ld)))
-;;(last (take 10000 (iterate spec_iter_defed  '(1)  ))) ; ~1200ms on the thinkpad
+(def symlookup_basicmath
+  {1 '+
+   2 '-
+   3 '*
+   4 '/
+   5 'x})
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn prog_wrap [holder prog ]
+ (postwalk-replace {::prog prog} holder) )
+
+(defn exemplar-test-list [prog-holder prog x-in]
+    (list (prog_wrap prog-holder prog) x-in))
+
+(defn exemplar-test [prog-holder prog x-in y-out] 
+  (let [y-ans (time (my_eval22 (exemplar-test-list 
+                    prog-holder
+                    prog
+                    x-in)))]
+    y-ans))
+
+(def prog-holder
+   '(fn [x] (+ 5 ::prog)))
+
+(def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
+
+
+(exemplar-test prog-holder '(+ x x) 5 :goo)
+;  (time (my_eval22 (exemplar-test-list 
+;                   '(fn [x] (+ 4 ::prog))
+;                   '(+ x x)
+;                    5)))
+  
+  
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+(def prog '(identity x))
+
+(prog_wrap prog-holder prog)
+
+(prog_wrap '(fn [x] (+ 5 ::prog))  '(+ 1 x) )
+(let [fun (eval (prog_wrap '(fn [x] (+ 5 ::prog))  '(+ 1 x) ))]
+  (fun 1))
+
+
+
+
+
+(def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
+
+
+
+
+
+
+(def x 5)
+(pprint (genprogs1 10 '()  '(1 2 3 4 5 :l :v :ld) symlookup_basicmath))
+
+(genprogs1 10 '(1 1 1 1 1 1 1 1 1)  '(1 2 3 4 5 :l) symlookup_basicmath)
+
+(def prog_wrap
+  "probel specific program wrap to a specific arity"
+  (fn [x] prog))
+
+(defn prep_for_eval [prog]
+  (concat '(fn [x]) (list prog))
+  )
+
+(prep_for_eval '(+ 1 x)) ;; ->   '(fn [x] (+ 1 x))
+
+
+
+
+
+(defmacro prep_for_eval2 [prog]
+  `(fn [~'z] (+ ~'z ~prog)))
+(macroexpand-1 '(prep_for_eval2  1))
+(macroexpand-1 '(prep_for_eval2  (+ z 3)))
+(prep_for_eval2  1)
+((prep_for_eval2  1) 5)
+((prep_for_eval2  (+ z 3)) 5)
+
+((prep_for_eval2 (+ x 3)) 5)
+
+(def prog1 (+ x 4))
+((prep_for_eval2 prog1) 5)
+(macroexpand-1 '(prep_for_eval2 prog2))
+
+(defn foooo [prog xin]    ;; the problem holding
+;;;`((~'fn [~'x] (+ ~'x ~prog))  ~xin))
+`((~'fn [~'x] ~prog)  ~xin))
+(foooo  '(+ x 1)  45)
+ (eval (foooo  '(+ x 1) 45))  ;-> y-out to be compared vs examples  ;;this is where safe eval would happen
+(let [prog '(* x 6)
+      in  56]
+  (foooo  prog in))
+ 
+
+
+
+
 
 (genprog nil 
          (last 
@@ -368,11 +464,11 @@
 
 (time
  (pprint 
-   (map (fn [x] (genprog nil x symlookup))  (take 10 (iterate spec_iter_defed  '(1 :v :v 1)  ))  )
+   (map (fn [x] (genprog nil x symlookup))  (take 4 (iterate spec_iter_defed  '(1 :v :v 1)  ))  )
  )
 )
 
-(pprint (map (fn [x] (genprog nil x symlookup))  (take 100 (iterate spec_iter_defed  '(2 :v 2 2 :ld :l 1 1 1)   ))))
+(pprint (map (fn [x] (genprog nil x symlookup))  (take 5 (iterate spec_iter_defed  '(2 :v 2 2 :ld :l 1 1 1)   ))))
 
 
 ;(frequencies (map count (take 100000 (iterate spec_iter_defed  '(1 1 1 1 1 1 1)   ))))
@@ -409,8 +505,8 @@
 
 ;; calls have to be after sb redefinition , else sandbox resets the namespace
 ;;TODO move sandboxing to dedicated namespace
-(def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
-
+(def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
+(ns-publics 'adatx.core)
 
 
 (add_timing (my_eval22 (genprog nil '(2 2 5) symlookup)))
@@ -418,5 +514,6 @@
 (class
   (class (:errormsg  (add_timing (my_eval22 '(+ 2 a))))))
 
- (ns-publics 'adatx.core)
+
+
 
