@@ -21,14 +21,7 @@
 ;;DONE Setting up sandbox in clojail
 
 
-;;(time (sb '(+ 1 2)))
-;;(time (+ 1 2))
-;;(time (eval '(+ 1 2)))
-;;(time(deref(future (+ 1 2))))
-;;(time(deref(future (eval '(+ 1 2)))))
-;;(time(deref(future (sb   '(+ 1 2)))))
-;; (* 6000 60 24)
-;   (ns-publics 'adatx.core)
+
 (def tester [(blacklist-symbols #{'alter-var-root})
              (blacklist-objects [java.lang.Thread])]) ; Create a blacklist.
 (def sb (sandbox tester :timeout 50 :namespace 'adatx.core))
@@ -84,7 +77,7 @@
    ))
 
 
-(defn my_eval22 [body]     ;;function version also works, but breaks the :quoted key, which is not important
+(defn my_eval22 [body]     ;;function version here also works, but breaks the :quoted key, which is not important
   (let [fut (future
                {:eval-sb   (sb body)  ;sandboxed evaluation
                 :expr    body 
@@ -319,7 +312,6 @@
   "iterator maker function"
   (fn [x] (spec_iterate x  keylist )))
 
-;
 (take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '()  ))
 
 
@@ -341,11 +333,14 @@
 (spec_iterate '(1)  '(1 2 :ld :l :v) )
 
 
-(defn genprogs1 [howmany startspec keylist symlookup]   ;;keylist could be determined from symlookup  
+(defn genprogs1 [n startspec keylist symlookup]   ;;keylist could be determined from symlookup  
+  "WIP generator of many progs , returns the list of progs.
+   TODO, should return the list of progs but also the next spec to itterate from on a map"
   (map (fn [x] (genprog nil x symlookup))
-    (take howmany (iterate (spec_iterate_f keylist)  startspec ))))
+    (take n (iterate (spec_iterate_f keylist)  startspec ))))
 
 
+;;(time (last (genprogs1 50000 '( 1) '(1 2 3 4 5 6 7 8 9 11 12 13 14 15 16 :l :ld) symlookup)   ))
 
 (def symlookup_basicmath
   {1 '+
@@ -353,7 +348,22 @@
    3 '*
    4 '/
    5 'x})
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;Some benchmarks
+;;(time (sb '(+ 1 2)))                   ;;~20ms  on Thinkpad
+;;(time (+ 1 2))                         ;;~0.086ms  on Thinkpad
+;;(time (eval '(+ 1 2)))                 ;;~1.9ms  on Thinkpad
+;;(time(deref(future (+ 1 2))))          ;;~0.67s
+;;(time(deref(future (eval '(+ 1 2)))))  ;;~2.98ms
+;;(time(deref(future (sb   '(+ 1 2)))))  ;;~20ms
+
+
+;; (* 6000 60 24)
+;   (ns-publics 'adatx.core)
+
+;;;;;;;;;;;Prog holder;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; candidate for program holding here.
+;;TODO needs to have arbit arrity?
 
 (defn prog_wrap [holder prog ]
  (postwalk-replace {::prog prog} holder) )
@@ -361,7 +371,12 @@
 (defn exemplar-test-list [prog-holder prog x-in]
     (list (prog_wrap prog-holder prog) x-in))
 
-(defn exemplar-in [prog-holder prog x-in y-out] 
+(defn exemplar-in [prog-holder prog x-in y-out]
+  "WIP evaluates the prog against the x-in data
+   TODO need to test against inputs
+   TODO need to put think about tests all examplars
+   TODO need to think about performance, my_eval22 and sandbox are very slow, need to batch these up within the sandbox
+   TODO but fall back to indiviudal tests if something blows up past try catch within the sb."
   (let [y-ans (time (my_eval22 (exemplar-test-list 
                     prog-holder
                     prog
@@ -369,12 +384,21 @@
     y-ans))
 
 (def prog-holder
+  "example of the simples prog holder"
    '(fn [x] ::prog))
+
+(def prog-holder
+ "prog-holder that embeds the search within an exisitng AST"
+   '(fn [x] (+ x ::prog)))
+
 
 (def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
 
 
 (exemplar-in prog-holder '(+ x x) 5 :goo)
+
+;;;;;;;;;;;Prog holder end;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
 ;  (time (my_eval22 (exemplar-test-list 
@@ -388,92 +412,9 @@
 
 
 
-(def prog '(identity x))
-
-(prog_wrap prog-holder prog)
-
-(prog_wrap '(fn [x] (+ 5 ::prog))  '(+ 1 x) )
-(let [fun (eval (prog_wrap '(fn [x] (+ 5 ::prog))  '(+ 1 x) ))]
-  (fun 1))
 
 
-
-
-
-(def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
-
-
-
-
-
-
-(def x 5)
-(pprint (genprogs1 10 '()  '(1 2 3 4 5 :l :v :ld) symlookup_basicmath))
-
-(genprogs1 10 '(1 1 1 1 1 1 1 1 1)  '(1 2 3 4 5 :l) symlookup_basicmath)
-
-(def prog_wrap
-  "probel specific program wrap to a specific arity"
-  (fn [x] prog))
-
-(defn prep_for_eval [prog]
-  (concat '(fn [x]) (list prog))
-  )
-
-(prep_for_eval '(+ 1 x)) ;; ->   '(fn [x] (+ 1 x))
-
-
-
-
-
-(defmacro prep_for_eval2 [prog]
-  `(fn [~'z] (+ ~'z ~prog)))
-(macroexpand-1 '(prep_for_eval2  1))
-(macroexpand-1 '(prep_for_eval2  (+ z 3)))
-(prep_for_eval2  1)
-((prep_for_eval2  1) 5)
-((prep_for_eval2  (+ z 3)) 5)
-
-((prep_for_eval2 (+ x 3)) 5)
-
-(def prog1 (+ x 4))
-((prep_for_eval2 prog1) 5)
-(macroexpand-1 '(prep_for_eval2 prog2))
-
-(defn foooo [prog xin]    ;; the problem holding
-;;;`((~'fn [~'x] (+ ~'x ~prog))  ~xin))
-`((~'fn [~'x] ~prog)  ~xin))
-(foooo  '(+ x 1)  45)
- (eval (foooo  '(+ x 1) 45))  ;-> y-out to be compared vs examples  ;;this is where safe eval would happen
-(let [prog '(* x 6)
-      in  56]
-  (foooo  prog in))
- 
-
-
-
-
-
-(genprog nil 
-         (last 
-           (take 100 (iterate spec_iter_defed  '()  ))
-               )
-         symlookup)
-
-
-(take 5 (iterate spec_iter_defed  '(1 :v 2 2 :ld :l 2 2 :ld)  ))
-
-
-(time
- (pprint 
-   (map (fn [x] (genprog nil x symlookup))  (take 4 (iterate spec_iter_defed  '(1 :v :v 1)  ))  )
- )
-)
-
-(pprint (map (fn [x] (genprog nil x symlookup))  (take 5 (iterate spec_iter_defed  '(2 :v 2 2 :ld :l 1 1 1)   ))))
-
-
-;(frequencies (map count (take 100000 (iterate spec_iter_defed  '(1 1 1 1 1 1 1)   ))))
+;(time (frequencies (map count (take 100000 (iterate spec_iter_defed  '(1 1 1 1 1 1 1)   )))))   ;;1284ms on ThinkPad. (v2.0)
 ;{7 78125, 8 21875}     ;;what would be the saving if we skipped the itterator when depth went below base level?
 ;{7 37472, 8 62528}     ;;with non silly specs
 
@@ -485,37 +426,8 @@
 ;;"Elapsed time: 157034.765806 msecs"   (on the thinkpad)
 ;;;{1 4, 2 16, 3 72, 4 336, 5 1600, 6 7712, 7 37472, 8 183104, 9 898432, 10 4422144, 11 4449108}
 
-(genprog nil
-   (last (take 170000 (iterate spec_iter_defed  '(1)   )))
-  symlookup)
-
-(/ (* 10000 0.05) 60 60)
-
-(def symlookup
-  {:l :listgen
-   :v :vectorgen
-   :ld :depthdown
-   1 1
-   2 2}
-  )
 
 
-  
-(nth (iterate inc 5) 10)
-;;(sort (keys symlookup))
-
-
-;; calls have to be after sb redefinition , else sandbox resets the namespace
-;;TODO move sandboxing to dedicated namespace
 (def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
-(ns-publics 'adatx.core)
-
-
-(add_timing (my_eval22 (genprog nil '(2 2 5) symlookup)))
-(add_timing (my_eval22 '(+ 2 a)))
-(class
-  (class (:errormsg  (add_timing (my_eval22 '(+ 2 a))))))
-
-
 
 
