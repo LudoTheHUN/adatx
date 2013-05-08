@@ -1,0 +1,531 @@
+
+(let [myfoo (fn [x] (+ 1 x))]
+  (meta myfoo))
+
+
+;(ns-publics 'adatx.core) 
+;(print (ns-refers 'adatx.core))
+
+
+
+(defn takeyourtime [x] (future 
+             (do (Thread/sleep x) (+ 1 2) 
+               )))
+(deref (takeyourtime 1) 2 :timedout)
+
+
+;(macroexpand-1 '(add_timing {:d (+ 1 2)}))
+
+
+;;--------------------------------------------------------------
+
+;;scratch code starts here
+
+
+;(add_timing {:d (+ 1 2)})
+
+;;(sb '(+ 3 3))
+
+
+
+
+
+(def codesinpet '(+ 1 2))
+
+
+(def codesinpet '(let [a 1 
+                       b 2]
+                   (+ a b)))
+
+
+  (def codesinpet '(let (vector a 1 
+                       b 2)
+                   (+ a b)))
+       
+(quote 
+  ;;fails, needs to be literal :-(
+(let (vec '(a 1 
+                       b 2))
+                   (+ a b))  
+)
+
+(def codesinpet '(let [a 1
+                       b 2
+                       f1 (fn [x] (* x x))]
+                   (+ a (f1 b))))
+
+(def codesinpet '(let [a {:v 1}
+                       b {:w 2}
+                       f1 (fn [x] (* x x))]
+                   (conj a b)))
+
+(def codesinpet '(take 5 (iterate inc 5)))
+
+
+
+;(def codesinpet '(iterate inc 5))  ;; this does blow us up :-( with OutOfMemoryError GC overhead limit exceeded  [trace missing]
+;trying to introduce an explicity future cancel
+
+;(class (iterate inc 5))
+
+;(sb '(iterate inc 5))    ;;;Thank you clojail... this is now safe too
+
+
+(def codesinpet  '(stackm 10000))  ; shows we are safe to stack overflow
+;NOTE we are already safe to timeout, so we should never blow up.
+
+
+
+
+
+(quote
+  (sb 1)
+; (def ans0 (time (add_timing (my_eval22 1))))
+
+; (def ans1 (time (add_timing (my_eval21 codesinpet))))    ;;this blows up clojure??!?!?
+ans1
+; (def ans2 (time (add_timing (my_eval21 '(stackm 1000000)))))
+ans2
+;  (def ans3 (time (add_timing (my_eval21 '(iterate inc 5)))))
+ans3
+)
+;(sb '(stackm 1000000))
+
+;(time (add_timing (my_eval21 '(:a 1))))
+;(time (add_timing (my_eval21  '(stackm 1000000))))
+
+
+
+
+
+(def a1 '())
+(def a2 (cons 'let a1))
+(def a3 (cons (vector) a2))
+(def a4 (cons (vec (cons 'a (first a3))) (rest a3)))
+
+
+(quote
+;;TODO need to track depth  number , pairs for maps and lets (an optimisation)
+;;take a flat list  with special keywords for starting, ending list,vecs,maps
+(hash-map 'a 'b)
+;(add_timing (my_eval21 '(hash-map :3 2 5)))   can not comment macros???
+;(add_timing (my_eval21 '(+ 1 2)))
+(conj {:d (+ 1 2)} {:foo 2 :boo 3})
+(macroexpand-1 '(my_eval21 (+ 1 2)))
+(let [dothis '(+ 12 3)]
+  (my_eval21 dothis))
+(let [dothis '(- 12 3)]
+  (my_eval dothis))
+(let [dothis {:ex '(- 12 3)}]
+  (my_eval (:ex dothis)))
+(let [dothis {:ex '(/ 12 0)}]
+  (my_eval (:ex dothis)))
+(let [a1     3
+      dothis '(+ 12 a1)]
+ (my_eval dothis))
+(my_eval
+(let [a1     3
+      dothis '(+ 12 4)]
+  dothis
+  ))
+(my_eval 3)
+(my_eval (+ 12 3))
+(eval '(+ 12 3))
+(defn safederef [future]
+(try
+   {:answer (deref future 
+                 2 :timeout)
+    :fut future
+    }
+   (catch Exception e  
+         {:error 1 :errormsg e}   )))
+(safederef (my_eval (do (Thread/sleep 10)  (+ 1 2))))
+(macroexpand-1 (my_eval (do (+ 1 2))))
+
+
+)  ;end quote
+
+
+;;-----------------------  genlist
+
+
+
+(quote
+  
+(genprog '(:a) '(:l 1 :l 2) nil)
+
+(second '(1))
+
+(split-at 4 [1 1 1 1 1 1 1 1])
+(drop-while #(not (= % :ld)) '(1 2 3 :ld  4 5 6 :ld 7 8 ))
+(drop-while #(not (= % :ld)) '(1 2 3  4 5 6 7 8 ))
+(take-while #(not (= % :ld)) '(1 2 3 :ld 4 5 6 7 8 ))
+
+(genprog '((:b ):a) '(:l 1 :l 2) '(:l))
+
+(genprog nil '(1 :l 2) nil)
+(genprog nil '(1 3 :l 2 4 :l #{5 4 3} '2 "foo" :goo {:key 'val} :l [3 3 5] ) nil)
+(genprog nil '(1 2 3 4 :l 4 5 6 ) nil)
+
+
+
+(= #{5 4 3} #{3 4 5})
+
+'((({:key (quote val)} :goo "foo" (quote 2) 5) 4 2) 3 1)
+(cons 'nil '(a b 1))
+(list)
+
+)
+
+
+
+ (ns-publics 'adatx.core)
+ (my_eval22 1)
+ 
+ (sb '(+ 1 2))
+ 
+ (defn genprog_WIP1 [partial spec depth]
+  (println "partial:" partial " spec:" spec " depth:"depth)
+  (let [specf        (first spec)
+        depthf       (first depth)
+        spec_past_ld (drop-while #(not (= % :ld)) spec)
+        spec_pre_ld  (take-while #(not (= % :ld)) spec)
+        second_spec  (second spec)]
+    (cond 
+    ;  (= specf :ld)
+    ;       nil
+      (= depthf :l)
+           (cons (genprog  (first partial) spec (rest depth)) (rest partial))
+      (= specf :l)
+           (genprog
+             (genprog (cons (list) partial) (rest spec_pre_ld) (cons :l depth))   ;;ok from the right
+             (rest spec_past_ld)
+             depth)      
+      (not (= specf nil))
+           (genprog (cons specf partial)  (rest spec) depth)
+      :else
+        partial)
+  ))
+  
+  
+  
+  (defn genprog_WIP2 [partial spec depth prevsym]
+  (println "partial:" partial " spec:" spec " depth:"depth "prevsym:" prevsym)
+  (let [specf        (first spec)
+        depthf       (first depth)
+        spec_past_ld (drop-while #(not (= % :ld)) spec)
+        spec_pre_ld  (take-while #(not (= % :ld)) spec)
+        second_spec  (second spec)]
+    (cond 
+    ;  (= specf :ld)
+    ;       nil
+    ;(= specf :ld)
+    ;    (do (println "hit (= specf :ld)")
+    ;         nil)
+    (= prevsym :l)
+           (cons (genprog  (first partial) spec depth specf) (rest partial))
+    (= specf :l)
+           (genprog
+             (genprog (cons (list) partial) (rest spec) (cons :l depth) specf)   ;;ok from the right
+             (rest spec)
+             depth
+             specf)
+    (not (= specf nil))
+        (do (println "hit (not (= specf nil)) with specf:" specf)
+            (genprog (cons specf partial)  (rest spec) depth specf))
+    :else
+        (do (println "hit the else with partial:" partial)
+             partial)
+  )))
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  (defn genprog [partial spec depth prevsym]
+    "WIP"
+  (println "partial:" partial " spec:" spec " depth:"depth "prevsym:" prevsym)
+  (let [specf        (first spec)
+        depthf       (first depth)
+        ;spec_pre_ld  (take-while #(not (= % :ld)) spec)        
+        ;spec_past_ld (drop-while #(not (= % :ld)) spec)
+        spec_pre_ld  (r-pairoff-pre spec :l :ld)   
+        spec_past_ld (let [len (count spec_pre_ld)] (drop len spec))
+        second_spec  (second spec)]
+    (cond 
+    ;  (= specf :ld)
+    ;       nil
+    ;(= specf :ld)
+    ;   (do (println "hit (= specf :ld)")
+    ;         nil)
+    (= prevsym :l)
+           (cons (genprog  (first partial) spec depth specf) (rest partial))
+    (= specf :l)
+        (do (println "hit (= specf :l) partial:" partial)
+          (genprog
+            (genprog (cons (list) partial) (rest spec_pre_ld) (cons :l depth) specf)   ;;ok from the right
+            (rest spec_past_ld)
+             depth
+             specf))
+    (not (= specf nil))
+        (do (println "hit (not (= specf nil)) with specf:" specf)
+            (genprog (cons specf partial)  (rest spec) depth specf))
+    :else
+        (do (println "hit the else with partial:" partial)
+             partial)
+  )))
+
+;;;   :l make a list   :ld  list down  
+
+;;NOTE do we really need to count :l and :ld ?
+
+;;Test worthy
+(quote 
+;;TODO depth is broken take and drop-while is not correct approach...
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) nil nil)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) nil nil)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) nil nil)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 7 8 9 ) nil nil)       ; '((9 8 7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 ) nil nil)  ;; '(((9 8 (7 6 5))) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l :l :l 5 6 7 :ld 8 9 :ld 10 11) nil nil)  ;; '(( 10 11 (9 8 (7 6 5))) 4 3 2 1)
+
+)
+
+;;Defining sb again at the end so we do not lose all out defined functions above with each call to sb
+
+(defn genprog [partial spec depth]
+  "WIP"
+  (println "partial:" partial " spec:" spec " depth:"depth)
+  (let [specf        (first spec)
+        depthf       (first depth)
+        spec_pre_ld  (r-pairoff-pre spec :l :ld)   
+        spec_past_ld (let [len (count spec_pre_ld)] (drop len spec))
+        second_spec  (second spec)]
+    (cond 
+    ;  (= specf :ld)
+    ;       nil
+      (= depthf :l)
+           (cons (genprog  (first partial) spec (rest depth)) (rest partial))
+      (= specf :l)
+           (genprog
+             (genprog (cons (list) partial) (rest spec_pre_ld) (cons :l depth))   ;;ok from the right
+             (rest spec_past_ld)
+             depth)      
+      (not (= specf nil))
+           (genprog (cons specf partial)  (rest spec) depth)
+      :else
+        partial)
+  ))
+
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 11 ) nil)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
+
+(defn genprog [partial spec depth]
+  "WIP"
+  (println "partial:" partial " spec:" spec " depth:"depth)
+  (let [specf        (first spec)
+        depthf       (first depth)
+        spec_pre_ld  (r-pairoff-pre spec :l :ld)
+        spec_past_ld (let [len (count spec_pre_ld)] (drop len spec))
+        second_spec  (second spec)]
+    (cond 
+    ;  (= specf :ld)
+    ;       nil
+      (= depthf :l)
+           (cons (genprog  (first partial) spec (rest depth)) (rest partial))
+      (= specf :l)
+           (genprog
+             (genprog (cons (list) partial) (rest spec_pre_ld) (cons :l depth))   ;;ok from the right
+             spec_past_ld
+             depth)      
+      (and (not (= specf nil)) (not (= specf :ld)))
+           (genprog (cons specf partial)  (rest spec) depth)
+      :else
+        partial)
+  ))
+
+
+;;WORKS!
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 11 ) nil)   ; '(10 (9 8 (7) 6 5) 4 3 2 1)
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) nil)   ; '(9 8 (7 6 5) 4 3 2 1)
+
+(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) nil)
+
+
+
+(def sb (sandbox tester :timeout 50 :namespace 'adatx.core))   ;;; NOTE sb will snapshot the 'adatx.core namespace as it is at the time we come here, it will be reset to this state with each call to sb
+
+
+
+
+
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ) symlookup)  
+(genprog nil '(1 2 3 4 :l 5 6 :l  7 :ld 8 :ld 10 ) symlookup)   
+(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 :ld ) symlookup)  
+(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :l :ld 10 :ld :ld 11 :ld :ld) symlookup)
+(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
+(genprog nil '(1 2 3 4 :l :l 6 :l  7 :ld 8 9 :ld :ld 10 :l :l :l :ld :ld 11 :ld 8 :ld) symlookup)
+(genprog nil '(1 2 3 4 :v :l 6 :l  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
+(genprog nil '(1 2 3 4 :v :l 6  7 :ld 8 9 :ld :ld 10 :v :l :l :ld :ld 11 :ld 8 :v) symlookup)
+(genprog nil '(:l :ld :ld 1) symlookup)   
+(genprog nil '(1 ) symlookup)
+(genprog nil '(1 2) symlookup)
+(genprog nil '(2 2 5) symlookup)
+(genprog nil '(2) symlookup)
+(genprog nil '(:ld) symlookup)
+
+(genprog nil '(1 :l 2 :ld 3 :l 1) symlookup)   
+(genprog nil '(1 2 :ld) symlookup)   
+
+
+
+(list   '(2))
+(identity 2)
+(vec '(:a 1 :b 2))
+(apply hash-map '(:a 1 :b 2))
+(hash-map :a 1 :b 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(def prog '(identity x))
+
+(prog_wrap prog-holder prog)
+
+(prog_wrap '(fn [x] (+ 5 ::prog))  '(+ 1 x) )
+(let [fun (eval (prog_wrap '(fn [x] (+ 5 ::prog))  '(+ 1 x) ))]
+  (fun 1))
+
+(def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
+
+
+(def x 5)
+(pprint (genprogs1 10 '()  '(1 2 3 4 5 :l :v :ld) symlookup_basicmath))
+
+(genprogs1 10 '(1 1 1 1 1 1 1 1 1)  '(1 2 3 4 5 :l) symlookup_basicmath)
+
+(def prog_wrap
+  "probel specific program wrap to a specific arity"
+  (fn [x] prog))
+
+(defn prep_for_eval [prog]
+  (concat '(fn [x]) (list prog))
+  )
+
+(prep_for_eval '(+ 1 x)) ;; ->   '(fn [x] (+ 1 x))
+
+
+
+
+
+(defmacro prep_for_eval2 [prog]
+  `(fn [~'z] (+ ~'z ~prog)))
+(macroexpand-1 '(prep_for_eval2  1))
+(macroexpand-1 '(prep_for_eval2  (+ z 3)))
+(prep_for_eval2  1)
+((prep_for_eval2  1) 5)
+((prep_for_eval2  (+ z 3)) 5)
+
+((prep_for_eval2 (+ x 3)) 5)
+
+(def prog1 (+ x 4))
+((prep_for_eval2 prog1) 5)
+(macroexpand-1 '(prep_for_eval2 prog2))
+
+(defn foooo [prog xin]    ;; the problem holding
+;;;`((~'fn [~'x] (+ ~'x ~prog))  ~xin))
+`((~'fn [~'x] ~prog)  ~xin))
+(foooo  '(+ x 1)  45)
+ (eval (foooo  '(+ x 1) 45))  ;-> y-out to be compared vs examples  ;;this is where safe eval would happen
+(let [prog '(* x 6)
+      in  56]
+  (foooo  prog in))
+ 
+
+
+
+
+
+(genprog nil 
+         (last 
+           (take 100 (iterate spec_iter_defed  '()  ))
+               )
+         symlookup)
+
+
+(take 5 (iterate spec_iter_defed  '(1 :v 2 2 :ld :l 2 2 :ld)  ))
+
+
+(time
+ (pprint 
+   (map (fn [x] (genprog nil x symlookup))  (take 4 (iterate spec_iter_defed  '(1 :v :v 1)  ))  )
+ )
+)
+
+(pprint (map (fn [x] (genprog nil x symlookup))  (take 5 (iterate spec_iter_defed  '(2 :v 2 2 :ld :l 1 1 1)   ))))
+
+
+
+
+
+
+
+
+
+
+(genprog nil
+   (last (take 170000 (iterate spec_iter_defed  '(1)   )))
+  symlookup)
+
+(/ (* 10000 0.05) 60 60)
+
+(def symlookup
+  {:l :listgen
+   :v :vectorgen
+   :ld :depthdown
+   1 1
+   2 2}
+  )
+
+
+  
+(nth (iterate inc 5) 10)
+;;(sort (keys symlookup))
+
+
+;; calls have to be after sb redefinition , else sandbox resets the namespace
+;;TODO move sandboxing to dedicated namespace
+(ns-publics 'adatx.core)
+
+
+(add_timing (my_eval22 (genprog nil '(2 2 5) symlookup)))
+(add_timing (my_eval22 '(+ 2 a)))
+(class
+  (class (:errormsg  (add_timing (my_eval22 '(+ 2 a))))))
+  
