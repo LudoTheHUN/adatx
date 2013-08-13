@@ -332,7 +332,7 @@
   (fn [x] (spec_iterate x  keylist )))
 
 (take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '()  ))
-
+(take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '(1 1 2 :l)  ))
 
 (def spec_iter_defed 
  "example final itterator with a fully qualified keylist" 
@@ -436,7 +436,7 @@
 (exemplar-in prog-holder '(+ x x) '(5) :goo)
 
 ;;;;;;;;;;;Prog holder end;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+ 
 
 (quote
   ;;Review of stability under different levels of eval safety.
@@ -474,27 +474,27 @@
       ;; even on other, valid calls.  Kills the repls and even eclipse.
       
       
-(defn makemanytests []
+(defn makemanytests [numtests]
   
       (map (fn [x] (exemplar-test-list 
                   '(fn [x] (+ 4 ::prog))
                    x
                     '(5)))
       
-      (genprogs1 100 '(1) '(1 2 :l :ld) {1 '+ 2 'x :l :ld})
+      (genprogs1 numtests '(1) '(1 2 :l :ld) {1 '+ 2 'x :l :ld})
       ))
 
 
   (defn answers []   (map my_eval22e
-   (makemanytests)))
+   (makemanytests 10)))
  
   (def sb2 (sandbox tester :timeout 1000 :namespace 'adatx.core))
 
   
   (defn answers-safe [] (sb2  '(map my_eval22e
-   (makemanytests))))
+   (makemanytests 200))))
   
-  (answers-safe)
+  (count (answers-safe))
         
   
 (time 
