@@ -498,6 +498,7 @@
         
   
   
+  
 (time 
 (pprint (filter #(not (nil? %)) (map :eval-sb (answers-safe))))
 )
