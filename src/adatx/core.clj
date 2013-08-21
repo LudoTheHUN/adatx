@@ -358,8 +358,19 @@
   (map (fn [x] (genprog nil x symlookup))
     (take n (iterate (spec_iterate_f keylist)  startspec ))))
 
+;;(time (last (genprogs1 50 '( 1) '(1 2 3 4 5 6 7 8 9 11 12 13 14 15 16 :l :ld) symlookup)   ))
 
-;;(time (last (genprogs1 50000 '( 1) '(1 2 3 4 5 6 7 8 9 11 12 13 14 15 16 :l :ld) symlookup)   ))
+(defn genprogs-lazy [startspec keylist symlookup]   ;;keylist could be determined from symlookup  
+  "WIP generator of many progs , returns the list of progs.
+   TODO, should return the list of progs but also the next spec to itterate from on a map"
+  (map (fn [x] (genprog nil x symlookup))
+    (iterate (spec_iterate_f keylist)  startspec )))
+;;TODO do this lazily...
+ 
+; (def allprogs (genprogs-lazy '( 1) '(1 2 3 :l :ld) symlookup))
+;;  (time (nth allprogs 10000))
+ ;  ;;;;(-- next allprogs)
+ ; (time (first (filter (fn[x] (= x '(3 3 3 2 2 2 2))) allprogs)))
 
 (def symlookup_basicmath
   {1 '+
@@ -485,8 +496,10 @@
       ))
 
 
-  (defn answers []   (map my_eval22e
+  (def answers (map my_eval22e
    (makemanytests 10)))
+  
+  
  
   (def sb2 (sandbox tester :timeout 1000 :namespace 'adatx.core))
 
@@ -503,7 +516,7 @@
 (pprint (filter #(not (nil? %)) (map :eval-sb (answers-safe))))
 )
 
- (realized? answer)
+ (realized? answers)
 
 )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
