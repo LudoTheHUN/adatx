@@ -1,6 +1,7 @@
-(ns adatx.core-test
+(ns adatx.progseq-test
   (:use clojure.test
-        adatx.core))
+        adatx.core
+        adatx.progseq))
 
 ;(deftest a-test
 ;  (testing "FIXME, I fail."
@@ -23,6 +24,10 @@
    10 10
    11 11 })
 
+
+
+(def r-pairoff-pre #'adatx.progseq/r-pairoff-pre)    ;testing private functions
+(def r-pairoff-post #'adatx.progseq/r-pairoff-post)
 
 
 (deftest r-pairoff-test
