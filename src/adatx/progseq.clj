@@ -119,10 +119,11 @@
         (reverse pgpartial))   ;NOTE , this will be interesting when we add maps and sets...
   ))
 
+(comment
 (genprog pgpartial spec symlookup)   
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
 (genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) {})
-
+)
 
 (defn- spec_iterate_dumb [spec keylist]
   "DO NOT USE v1.0 returns next spec   where spec is a list, each element is in the ordered list given by symlookup
@@ -158,11 +159,12 @@
                            :else 0))
        )))))
   
+(comment
 (spec-depth-pair spec)
 (spec-depth-pair '(:l :l 1 :ld :ld  1))
 (spec-depth-pair '(:l 1 :ld :ld  1))
 (spec-depth-pair '(:l 1 :v :ld  1))
-
+)
 
 (defn spec_iterate [spec keylist]
   "v2.0 Iterate on the right, grows on the left, just like normal numbers, but with special carrying for :ld symbol.
@@ -197,13 +199,13 @@
 
 
 
-
+(comment
 (spec_iterate spec keylist)
 (= (spec_iterate '(2 2 1 2)      '(1 2))     '(1 2 2 :l))
 (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))
 (spec_iterate '(1 :v 2 :ld)  '(1 2 :l :v :ld))
 (spec_iterate '(1)  '(1 2 :ld :l :v) )
-
+)
 
 
 
