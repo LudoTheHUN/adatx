@@ -220,14 +220,15 @@
   (fn [spec] (spec_iterate spec  keylist )))
 
 
- ;;Examples
-;(take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '()  ))
-;(take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '(1 1 2 :l)  ))
-;(def -spec_iter_defed 
-; "example final itterator with a fully qualified keylist" 
-;  (spec_iterate_f '(1 2 :l :v :ld)))
 
 
+(comment
+(take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '()  ))
+(take 100 (iterate (spec_iterate_f '(1 2 :l :v :ld))  '(1 1 2 :l)  ))
+(def -spec_iter_defed 
+ "example final itterator with a fully qualified keylist" 
+   (spec_iterate_f '(1 2 :l :v :ld)))
+)
 
 
 
@@ -238,7 +239,8 @@
   (map (fn [x] (genprog nil x symlookup))
     (take n (iterate (spec_iterate_f keylist)  spec ))))
 
-;;(time (last (genprogs_n 50 '( 1) '(1 2 3 4 5 6 7 8 9 11 12 13 14 15 16 :l :ld) symlookup)   ))
+;;(time (last (genprogs_n n spec keylist symlookup)))
+;;(time (last (genprogs_n 505 '( 1) '(1 2 3 4  :l :ld) symlookup)   ))
 
 (defn genprogs-lazy [startspec keylist symlookup]   ;;keylist could be determined from symlookup  
   "WIP generator of many progs , returns the list of progs.
@@ -246,12 +248,12 @@
   (map (fn [x] (genprog nil x symlookup))
     (iterate (spec_iterate_f keylist)  startspec )))
 
-
-;;(take 2 (genprogs-lazy spec keylist symlookup))
-
-;;(def allprogs (genprogs-lazy '( 1) '(1 2 3 :l :ld) symlookup))
-;;  (time (nth allprogs 10000))
-;  ;;;;(-- next allprogs)
-; (time (first (filter (fn[x] (= x '(3 3 3 2 2 2 2))) allprogs)))
+(comment
+(take 2 (genprogs-lazy spec keylist symlookup))
+(def allprogs (genprogs-lazy '( 1) '(1 2 3  :l :ld) symlookup))
+  (time (nth allprogs 10001))
+ ;;;;(-- next allprogs)
+(time (first (filter (fn[x] (= x '(3 3 3 2 2 2 2))) allprogs)))
+)
 
 
