@@ -196,6 +196,7 @@
    10 ''(sdf sdfwe wer)     })
 
 (def symlookup
+  "example symbol map"
   {:l :listgen     ;reserved for iterator
    :v :vectorgen   ;reserved for iterator
    :ld :depthdown  ;reserved for iterator
@@ -211,14 +212,19 @@
    10 10
    11 11})
 
+(def keylist "keys of the example symol map" (keys symlookup))
 
-(defn genprog [partial spec symlookup]
+(def spec "exampel program spec that can be itterated over or be turned into a prog" '(1 2 3 4 :l 5 6 :l  7 :ld 8 9 :ld 10 ))
+
+(def pgpartial "prog partial, when envoking, should be" nil)   ;could close over this
+
+(defn genprog [pgpartial spec symlookup]
   "v1.2 correct for lists generation with :l, :v and :ld
    consider adding :m for literal map support, will need to deal with bad pairs
    consider adding :s for literal set support, will need to deal with duplicate keys
    It drops data if we :ld past lowest level
   "
-  ;(println "partial:" partial " spec:" spec " depth:"depth)
+  ;(println "pgpartial:" pgpartial " spec:" spec " depth:"depth)
   (let [speclookup   (symlookup (first spec))
         specf        (first spec)
         spec_pre_ld  (if (contains? #{:l :v} specf)
@@ -231,24 +237,26 @@
         (genprog
              (cons 
                (genprog (list) (rest spec_pre_ld) symlookup)          ;;list version
-               partial
+               pgpartial
                )
          spec_past_ld symlookup)
     (= specf :v)     
         (genprog
              (cons 
                (vec (genprog (list) (rest spec_pre_ld) symlookup))   ;; vector version
-               partial
+               pgpartial
                )
          spec_past_ld symlookup)
     (and (not (= specf nil)) 
          (not (= specf :ld))
          ;(not (= specf :l))
          )   ;; the sale level add a symbol
-           (genprog (cons speclookup partial)  (rest spec) symlookup)
+           (genprog (cons speclookup pgpartial)  (rest spec) symlookup)
      :else
-        (reverse partial))   ;NOTE , this will be interesting when we add maps and sets...
+        (reverse pgpartial))   ;NOTE , this will be interesting when we add maps and sets...
   ))
+
+
 
 
 
@@ -269,17 +277,18 @@
   )
 )
 
+; (spec_iterate_dumb spec keylist)
 
 
 
 (defn spec-depth-pair [spec]
   "returns pairs of the specs and the depth at that spec item
    supports :l :v :ld only "
-  (loop [partial '() spec spec depth 0]
+  (loop [pgpartial '() spec spec depth 0]
     (if (empty? spec)
-      (reverse partial)
+      (reverse pgpartial)
       (let [specf (first spec)]
-        (recur (cons (list specf depth)  partial)
+        (recur (cons (list specf depth)  pgpartial)
                (rest spec)
                (+ depth (cond 
                           (contains? #{:l :v} specf) 1
@@ -287,6 +296,7 @@
                            :else 0))
        )))))
   
+;(spec-depth-pair spec)
 ;(spec-depth-pair '(:l :l 1 :ld :ld  1))
 ;(spec-depth-pair '(:l 1 :ld :ld  1))
 ;(spec-depth-pair '(:l 1 :v :ld  1))
@@ -300,28 +310,30 @@
    keylist has to have :l :v at the end, and :ld at the very end, althugh they are optional if we do not want to
    generate programs with list, vectors (:l :v), and or if never want to end these (:ld)"
  (let [spec-depth   (reverse (spec-depth-pair spec))]
-    (loop [partial '() spec-depth spec-depth carry-r? true]
+    (loop [pgpartial '() spec-depth spec-depth carry-r? true]
       (if (empty? spec-depth)
         (if carry-r? 
-          (cons (first keylist) partial)   ;we are on the last number and we need to carry, hence grow the spec
-          partial)  
+          (cons (first keylist) pgpartial)   ;we are on the last number and we need to carry, hence grow the spec
+          pgpartial)  
         (let [specf  (ffirst spec-depth)
               depth  (second (first spec-depth))
               nex    (second (drop-while #(not(= % specf))  keylist))
               carry? (or (and (= depth 0) (= nex :ld) carry-r?)
                          (and (nil? nex) carry-r?)
-                         (and (= partial '()) (= nex :ld))
+                         (and (= pgpartial '()) (= nex :ld))
                          )
               next   (if carry-r?
                             (if carry? (first keylist) nex) 
                             specf)]
           (recur          
                      ;;grow on the left to carry over
-                  (cons next partial)
+                  (cons next pgpartial)
                   (rest spec-depth)
                   carry?
                   )
 )))))
+
+;(spec_iterate spec keylist)
 
 
 ;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
