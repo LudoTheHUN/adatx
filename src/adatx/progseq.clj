@@ -40,7 +40,7 @@
 
 (def pgpartial "prog partial, when envoking, should be" nil)   ;could close over this
 
-(def n "exampel n "4)
+(def n "exampel n is" 4)
 
 
 (defn- pairoff-pre [list accum match matchd depth]
@@ -200,6 +200,7 @@
 
 
 (comment
+  "spec_iterate examples"
 (spec_iterate spec keylist)
 (= (spec_iterate '(2 2 1 2)      '(1 2))     '(1 2 2 :l))
 (spec_iterate '(:v :v :v :v)  '(1 2 :l :v :ld))
@@ -218,8 +219,6 @@
 (defn- spec_iterate_f [keylist]
   "iterator maker function"
   (fn [spec] (spec_iterate spec  keylist )))
-
-
 
 
 (comment
@@ -249,6 +248,7 @@
     (iterate (spec_iterate_f keylist)  startspec )))
 
 (comment
+ "genprogs-lazy examples"
 (take 2 (genprogs-lazy spec keylist symlookup))
 (def allprogs (genprogs-lazy '( 1) '(1 2 3  :l :ld) symlookup))
   (time (nth allprogs 10001))
