@@ -26,8 +26,9 @@
 (defn prog_wrap [prog-holder prog ]
  (postwalk-replace {::prog prog} prog-holder) )
 
-(defn exemplar-test-list [prog-holder prog x-in]
-    (cons (prog_wrap prog-holder prog) x-in))
+(defn put-prog-in-prog-holder [prog-holder prog x-ins]
+    (cons (prog_wrap prog-holder prog) x-ins))
+
 
 
 
@@ -39,7 +40,7 @@
    TODO need to put think about tests all examplars
    TODO need to think about performance, my_eval22 and sandbox are very slow, need to batch these up within the sandbox
    TODO but fall back to indiviudal tests if something blows up past try catch within the sb."
-  (let [y-ans (time (my_eval22 (exemplar-test-list 
+  (let [y-ans (time (my_eval22 (put-prog-in-prog-holder
                     prog-holder
                     prog
                     x-in)))]

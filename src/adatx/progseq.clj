@@ -240,6 +240,7 @@
 
 ;;(time (last (genprogs_n n spec keylist symlookup)))
 ;;(time (last (genprogs_n 505 '( 1) '(1 2 3 4  :l :ld) symlookup)   ))
+;;(genprogs_n 50 nil '(1 2 3 4  :l :ld) symlookup)
 
 (defn genprogs-lazy [startspec keylist symlookup]   ;;keylist could be determined from symlookup  
   "WIP generator of many progs , returns the list of progs.

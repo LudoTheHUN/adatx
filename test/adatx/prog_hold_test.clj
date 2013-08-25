@@ -20,9 +20,7 @@
           '(fn [x] (+ x 1))))
     (is (= 
           (let [prog-holder '(fn [x] {:a 1 :prog :adatx.prog-hold/prog})   prog '(+ x 1)] (phold/prog_wrap prog-holder prog))
-          '(fn [x] {:a 1, :prog (+ x 1)})))      
-    
-    
+          '(fn [x] {:a 1, :prog (+ x 1)})))
     ))
  
 
