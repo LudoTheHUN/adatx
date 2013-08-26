@@ -21,6 +21,12 @@
     (is (= 
           (let [prog-holder '(fn [x] {:a 1 :prog :adatx.prog-hold/prog})   prog '(+ x 1)] (phold/prog_wrap prog-holder prog))
           '(fn [x] {:a 1, :prog (+ x 1)})))
+    (is (= 
+          (let [prog-holder '(fn [x] {:a 1 :prog :adatx.prog-hold/prog})   prog '2] (phold/prog_wrap prog-holder prog))
+          '(fn [x] {:a 1, :prog 2})))
+    (is (= 
+          (let [prog-holder '(fn [x] :adatx.prog-hold/prog)                prog '2] (phold/prog_wrap prog-holder prog))
+          '(fn [x] 2)))
     ))
  
 

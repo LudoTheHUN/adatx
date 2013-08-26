@@ -104,6 +104,7 @@
 
 (deftest spec_iterate-test
   (testing "spec_iterate"
+    (is (= (spec_iterate nil      '(1 2 :l :v :ld))           '(1)))
     (is (= (spec_iterate '(1 2 2 2)      '(1 2 :l :v :ld))     '(1 2 2 :l)))
     (is (= (spec_iterate '(1 2 2 :v)     '(1 2 :l :v :ld))     '(1 2 :l 1)))
     (is (= (spec_iterate '(1 2 2 :ld)    '(1 2 :l :v :ld))     '(1 2 :l 1)))
