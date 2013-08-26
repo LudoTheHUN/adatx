@@ -116,8 +116,9 @@
     (is (= (spec_iterate '(:v :v :ld :v :v) '(1 2 :l :v :ld))  '(:v :v :ld :ld 1)))
     (is (= (spec_iterate '(:v 1 :ld :l :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :v 1 1 1)))
     (is (= (spec_iterate '(:v 1 :ld :l 2 :ld :v :v)  '(1 2 :l :v :ld))     '(:v 1 :ld :l :l 1 1 1)))
+    (is (= (spec_iterate '(1 2 2 2)      '(:l :v :ld 1 2))     '(2 :l :l :l)))
     )
-  )
+  )     ;; (genprog nil '(2 :l :l :l) symlookup-nums)
         
         
         
