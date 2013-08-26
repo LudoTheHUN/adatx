@@ -85,8 +85,7 @@
 
 
 (defn prog-eval-in-out-pairs [ready-prog in-out-pairs sandbox timeout]
-      (map  (fn [eval-map]  (conj eval-map (prog-eval/prog-eval 
-                                             (do (println (:evalready-prog eval-map)) (:evalready-prog eval-map))
+      (map  (fn [eval-map]  (conj eval-map (prog-eval/prog-eval  (:evalready-prog eval-map)
                                              sandbox timeout) ))
             (prepforeval-in-out-pairs ready-prog in-out-pairs)))
 
@@ -133,7 +132,7 @@
          testfun      :testfun
          }     prob-holder    ;;TODO add defaults here
          count-in-out-pairs        (count in-out-pairs)
-         progs-seq                 (take 10 (progseq/genprogs-lazy spec keylist symlookup)) ; carefull, this is infinate
+         progs-seq                 (take 100000 (progseq/genprogs-lazy spec keylist symlookup)) ; carefull, this is infinate
          ready-prog-seq            (map (fn [prog] (prog-hold/prog_wrap prog-holder prog )) progs-seq)
          ;;prepforeval-seq         (map (fn [ready-prog] (prepforeval-in-out-pairs  ready-prog in-out-pairs)) ready-prog-seq)
          evaled-maps-seq           (map (fn [ready-prog] (prog-eval-in-out-pairs ready-prog in-out-pairs sandbox timeout)) ready-prog-seq)
@@ -143,77 +142,41 @@
         ]
     ;;;;TODO need a function that will go and apply :in-out-pairs and collect number of correct answers (thus EVAL)
     
+    (doall
       (take 1 
                   (filter (fn [assessed-evaled-map]
-                        (println ;(:assessment assessed-evaled-map) 
+                          (if (= (:errors (:assessment assessed-evaled-map)) 0)
+                              (println ;(:assessment assessed-evaled-map) 
                                  (:ready-prog (first (:evaled-maps assessed-evaled-map))) 
-                                 (:errormsg (first (:evaled-maps assessed-evaled-map))) 
+                                 ;(try (subs (str (:errormsg (first (:evaled-maps assessed-evaled-map)))) 0 20) (catch Exception e ""))
                                  ;(:expr (first (:evaled-maps assessed-evaled-map))) 
                                  ;assessed-evaled-map
-                                 )
+                                 ))
                         (= count-in-out-pairs (:total_correct (:assessment assessed-evaled-map))))
                       assessed-evaled-maps-seq))
+      )
+    
+    
+      
+    ;;  (realized? assessed-evaled-maps-seq)
 ))
     
-    ; (prepforeval-in-out-pairs progs-seq in-out-pairs) 
-  
-
-
-;(def sandbox "example quick sandbox, note that this needs to be created again just before use since use of sandbox reverts the state of the ns"
-;  (prog-eval/make-sb (symbol (str *ns*))))
-
-
-;;(prob-solve prob-holder)
-
-(prog-eval/prog-eval '((fn [x1 x2 x3] (+ x1 (()))) 4 3 3) (prog-eval/make-sb 'adatx.sandboxns) timeout)
-
-(defn foo [prob-holder] (prog-eval/prog-eval '((fn [x1 x2 x3] (+ x1 (()))) 4 3 3) (prog-eval/make-sb 'adatx.sandboxns) timeout))
-(foo prob-holder)
-
-(defn foo1 [prob-holder] 
-  (let [prob-holder1 (preped-prob-holder prob-holder)      
-        {spec         :init-spec  
-         keylist      :keylist
-         symlookup    :symlookup
-         prog-holder  :prog-holder
-         in-out-pairs :in-out-pairs
-         sandbox      :sandbox
-         timeout      :timeout
-         testfun      :testfun
-         }     prob-holder]    ;;TODO add defaults here
-    
-  (prog-eval/prog-eval '((fn [x1 x2 x3] (+ x1 (()))) 4 3 3) (prog-eval/make-sb 'adatx.sandboxns) 100)))    ;;;THE LET closure is causing the sand box to NULLpointer e!!
-;;;ITs the Time OUT?!
-(foo1 prob-holder)
-
-
-(defn foo2 [prob-holder]
-  (let [a "A"]
-    (prog-eval/prog-eval '((fn [x1 x2 x3] (+ x1 (()))) 4 3 3) (prog-eval/make-sb 'adatx.sandboxns) timeout)))
- 
-(foo2 prob-holder)
-
-
-(keys (ns-publics 'adatx.prog-eval))
-
-;;((fn [x1 x2 x3] (+ x1 ())) 1 2 3)
-
-;   (prog-eval/prog-eval '((fn [x1 x2 x3] (+ x1 (+ x1))) 1 2 3) sandbox  100)
-
-(quote    
-   (take 1   (map (fn [prog] 
-                   ;;TODO need to apply ins, test outputs, find correct solutions
-                   ;dont do this (prog-hold/put-prog-in-prog-holder prog-holder prog '(1 2 3)))
-                   (cons (prog-hold/prog_wrap prog-holder prog ) (:in (second in-out-pairs )) ))  ;;WIP ;;first get the ready to run_prog, then add the in
-                  (progseq/genprogs-lazy spec keylist symlookup)))
-             
-)             
+;(prob-solve prob-holder)
 
 
 
- ; "unimplemented"))
+(quote 
+(prob-solve 
+ {:symlookup {1 '+ 2 '- 5 'x1 6 'x2 :l :listgen :ld :depthdown}
+  :prog-holder '(fn [x1 x2] :adatx.prog-hold/prog)
+  :testfun (fn [in out] (= in out))
+  :in-out-pairs  [{:in [1 2] :out 4}
+                  {:in [1 3] :out 5}
+                  {:in [2 3] :out 7}
+                  {:in [4 3] :out 11}]
+  :sandbox (prog-eval/make-sb 'adatx.sandboxns)  ;;;(prog-eval/make-sb (symbol (str *ns*)))   
+  :timeout 200
+ })
 
-
-
-
+)
 
