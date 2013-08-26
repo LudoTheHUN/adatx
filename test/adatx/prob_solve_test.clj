@@ -26,7 +26,7 @@
 )
 
 
-(is (= (solve/prob-solve prog-holder) '(fn [x1 x2 x3] (+ x1 (+ x2 x3 (- x1))))))
+;(is (= (solve/prob-solve prog-holder) '(fn [x1 x2 x3] (+ x1 (+ x2 x3 (- x1))))))
 
 
 

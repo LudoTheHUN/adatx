@@ -26,7 +26,7 @@
 (defn prog_wrap [prog-holder prog ]
  (postwalk-replace {::prog prog} prog-holder) )
 
-(defn put-prog-in-prog-holder [prog-holder prog x-ins]
+(defn- put-prog-in-prog-holder [prog-holder prog x-ins]  ;; don't need this, how hard is it to cons something....
     (cons (prog_wrap prog-holder prog) x-ins))
 
 
