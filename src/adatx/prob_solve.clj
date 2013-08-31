@@ -131,7 +131,8 @@
 
 (defn log-assessed-evaled-map [assessed-evaled-map loglevel]
     (if (and (= (:errors (:assessment assessed-evaled-map)) 0)   (> loglevel 0))   ;;TODO make a debug level function that can control what stuff is shown
-         (println  (if (> loglevel 4)  (str " errors: "        (:errors        (:assessment assessed-evaled-map))) "")
+         (println  (if (> loglevel 1)  (str " counter: "       (:counter  assessed-evaled-map) ""))
+                   (if (> loglevel 4)  (str " errors: "        (:errors        (:assessment assessed-evaled-map))) "")
                    (if (> loglevel 3)  (str " total_correct: " (:total_correct (:assessment assessed-evaled-map))) "")
                    (if (> loglevel 2)  (str " eval-sb: "       (:eval-sb       (first (:evaled-maps assessed-evaled-map))))"")
                    (if (> loglevel 1)  (str " ready-prog: "    (:ready-prog    (first (:evaled-maps assessed-evaled-map))))"")

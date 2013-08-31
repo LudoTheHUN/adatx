@@ -26,7 +26,7 @@
                                   {:in [4 3 3] :out 6}
                                   ]
                   :maxprogs 1000
-                  :loglevel 3
+                  :loglevel 10
                   }
 )
 
