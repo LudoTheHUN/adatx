@@ -23,15 +23,18 @@
                   :in-out-pairs  [{:in [1 2 3] :out 5}
                                   {:in [1 3 3] :out 6}
                                   {:in [2 3 3] :out 6}
-                                  {:in [4 3 3] :out 7}
+                                  {:in [4 3 3] :out 6}
                                   ]
+                  :maxprogs 1000
+                  :loglevel 3
                   }
 )
 
 
 
 (quote
-(solve/prob-solve prog-holder)
+(def answer (solve/prob-solve prog-holder))
+(:ready-prog (first (:evaled-maps (first answer))))
 
 ;(is (= (solve/prob-solve prog-holder) '(fn [x1 x2 x3] (+ x1 (+ x2 x3 (- x1))))))
 

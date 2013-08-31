@@ -120,29 +120,44 @@
 (assess-prog-evaled-in-out-pairs [{:error 1 :out 10 :eval-sb 3} {:error 1 :out 1 :eval-sb 3}] testfun)
 
 
+(def assessed-evaled-map "example of result created by prob-solve"
+{:assessment {:testfun-result '(true true true true), :errors 0, :first_n_correct 4, :total_correct 4}, 
+ :evaled-maps '({:in [1 2 3], :ready-prog (fn [x1 x2 x3] (+ x2 x3)), :evalready-prog ((fn [x1 x2 x3] (+ x2 x3)) 1 2 3), :error 0, :eval-sb 5, :out 5, :expr ((fn [x1 x2 x3] (+ x2 x3)) 1 2 3)} 
+                {:in [1 3 3], :ready-prog (fn [x1 x2 x3] (+ x2 x3)), :evalready-prog ((fn [x1 x2 x3] (+ x2 x3)) 1 3 3), :error 0, :eval-sb 6, :out 6, :expr ((fn [x1 x2 x3] (+ x2 x3)) 1 3 3)} 
+                {:in [2 3 3], :ready-prog (fn [x1 x2 x3] (+ x2 x3)), :evalready-prog ((fn [x1 x2 x3] (+ x2 x3)) 2 3 3), :error 0, :eval-sb 6, :out 6, :expr ((fn [x1 x2 x3] (+ x2 x3)) 2 3 3)} 
+                {:in [4 3 3], :ready-prog (fn [x1 x2 x3] (+ x2 x3)), :evalready-prog ((fn [x1 x2 x3] (+ x2 x3)) 4 3 3), :error 0, :eval-sb 6, :out 6, :expr ((fn [x1 x2 x3] (+ x2 x3)) 4 3 3)})
+ :counter 119})
 
+
+(defn log-assessed-evaled-map [assessed-evaled-map loglevel]
+    (if (and (= (:errors (:assessment assessed-evaled-map)) 0)   (> loglevel 0))   ;;TODO make a debug level function that can control what stuff is shown
+         (println  (if (> loglevel 4)  (str " errors: "        (:errors        (:assessment assessed-evaled-map))) "")
+                   (if (> loglevel 3)  (str " total_correct: " (:total_correct (:assessment assessed-evaled-map))) "")
+                   (if (> loglevel 2)  (str " eval-sb: "       (:eval-sb       (first (:evaled-maps assessed-evaled-map))))"")
+                   (if (> loglevel 1)  (str " ready-prog: "    (:ready-prog    (first (:evaled-maps assessed-evaled-map))))"")
+                   ))
+)
+
+;(log-assessed-evaled-map assessed-evaled-map)
+ ;(try (subs (str (:errormsg (first (:evaled-maps assessed-evaled-map)))) 0 20) (catch Exception e ""))
+                                 ;(:expr (first (:evaled-maps assessed-evaled-map))) 
+                                 ;assessed-evaled-map
 
 (defn prob-solve [prob-holder] 
   (let [prob-holder (preped-prob-holder prob-holder)    
-      ;  {init-spec    :init-spec  
-      ;   keylist      :keylist
-      ;   symlookup    :symlookup
-      ;   prog-holder  :prog-holder
-      ;   in-out-pairs :in-out-pairs
-      ;   sandbox      :sandbox
-      ;   timeout      :timeout
-      ;   testfun      :testfun
-      ;   }     prob-holder    ;;TODO add defaults here
+
          {:keys [init-spec keylist symlookup prog-holder 
-               in-out-pairs sandbox timeout testfun]
+                 in-out-pairs sandbox timeout testfun maxprogs loglevel]
           :or {sandbox (prog-eval/make-sb 'adatx.sandboxns) 
-               timeout 200}}   prob-holder
+               timeout 200 
+               maxprogs 1000000
+               loglevel 1}}   prob-holder
          count-in-out-pairs        (count in-out-pairs)
-         progs-seq                 (take 1000000 (progseq/genprogs-lazy init-spec keylist symlookup)) ; carefull, this is infinate
+         progs-seq                 (take maxprogs (progseq/genprogs-lazy init-spec keylist symlookup)) ; carefull, this is infinate
          ready-prog-seq            (map (fn [prog] (prog-hold/prog_wrap prog-holder prog )) progs-seq)
          ;;prepforeval-seq         (map (fn [ready-prog] (prepforeval-in-out-pairs  ready-prog in-out-pairs)) ready-prog-seq)
          evaled-maps-seq           (map (fn [ready-prog] (prog-eval-in-out-pairs ready-prog in-out-pairs sandbox timeout)) ready-prog-seq)
-         assessed-evaled-maps-seq  (map (fn [evaled-maps] {:assessment (assess-prog-evaled-in-out-pairs evaled-maps testfun) :evaled-maps evaled-maps })  evaled-maps-seq)
+         assessed-evaled-maps-seq  (map (fn [evaled-maps counter] {:assessment (assess-prog-evaled-in-out-pairs evaled-maps testfun) :evaled-maps evaled-maps :counter counter })  evaled-maps-seq (range))
          
                          ;; (map (fn       prog-eval-in-out-pairs ready-prog in-out-pairs sandbox timeout
         ]
@@ -151,24 +166,9 @@
     (doall
       (take 1 
                   (filter (fn [assessed-evaled-map]   
-                          (if (= (:errors (:assessment assessed-evaled-map)) 0)    ;;TODO make a debug level function that can control what stuff is shown
-                              (println ;(:assessment assessed-evaled-map) 
-                                 "errors:"        (:errors        (:assessment assessed-evaled-map))
-                                 "total_correct:" (:total_correct (:assessment assessed-evaled-map))
-                                 ":eval-sb"       (:eval-sb       (first (:evaled-maps assessed-evaled-map)))                                 
-                                 "ready-prog "    (:ready-prog    (first (:evaled-maps assessed-evaled-map)))
-                                 ;(try (subs (str (:errormsg (first (:evaled-maps assessed-evaled-map)))) 0 20) (catch Exception e ""))
-                                 ;(:expr (first (:evaled-maps assessed-evaled-map))) 
-                                 ;assessed-evaled-map
-                                 ))
-                        (= count-in-out-pairs (:total_correct (:assessment assessed-evaled-map))))
-                      assessed-evaled-maps-seq))
-      )
-    
-    
-      
-    ;;  (realized? assessed-evaled-maps-seq)
-))
+                          (log-assessed-evaled-map assessed-evaled-map loglevel)
+                          (= count-in-out-pairs (:total_correct (:assessment assessed-evaled-map))))
+                      assessed-evaled-maps-seq)))))
     
 ;(prob-solve prob-holder)
 
