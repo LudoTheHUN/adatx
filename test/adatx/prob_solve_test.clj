@@ -17,14 +17,18 @@
                                7 'x3}
                   ;:prog-holder '(fn [x1 x2 x3] (+ x1 :adatx.prog-hold/prog))
                   :prog-holder '(fn [x1 x2 x3] :adatx.prog-hold/prog)
-                  :testfun (fn [in out] (= in out))
+                  ;:testfun (fn [out ans] (= out ans))
+                  :testfun (fn [out ans] (try (= out ans) (catch Exception e nil)))
+
                   :in-out-pairs  [{:in [1 2 3] :out 5}
                                   {:in [1 3 3] :out 6}
                                   {:in [2 3 3] :out 6}
-                                  {:in [4 3 3] :out 6}
+                                  {:in [4 3 3] :out 7}
                                   ]
                   }
 )
+
+
 
 (quote
 (solve/prob-solve prog-holder)

@@ -104,6 +104,8 @@
 
 ;(def evaled-maps (prog-eval-in-out-pairs ready-prog in-out-pairs sandbox timeout))
 
+(def testfun (fn [out eval-sb] (> out eval-sb)))
+
 (defn assess-prog-evaled-in-out-pairs [evaled-maps testfun]
       (let [
             errors           (reduce + (map :error evaled-maps))
@@ -115,6 +117,9 @@
         ))
 
 ;(assess-prog-evaled-in-out-pairs evaled-maps (:testfun prob-holder))
+(assess-prog-evaled-in-out-pairs [{:error 1 :out 10 :eval-sb 3} {:error 1 :out 1 :eval-sb 3}] testfun)
+
+
 
 
 (defn prob-solve [prob-holder] 
@@ -150,8 +155,8 @@
                               (println ;(:assessment assessed-evaled-map) 
                                  "errors:"        (:errors        (:assessment assessed-evaled-map))
                                  "total_correct:" (:total_correct (:assessment assessed-evaled-map))
+                                 ":eval-sb"       (:eval-sb       (first (:evaled-maps assessed-evaled-map)))                                 
                                  "ready-prog "    (:ready-prog    (first (:evaled-maps assessed-evaled-map)))
-                                 ":eval-sb"       (:eval-sb       (first (:evaled-maps assessed-evaled-map)))
                                  ;(try (subs (str (:errormsg (first (:evaled-maps assessed-evaled-map)))) 0 20) (catch Exception e ""))
                                  ;(:expr (first (:evaled-maps assessed-evaled-map))) 
                                  ;assessed-evaled-map
