@@ -15,6 +15,7 @@ Inspired by:
 
 
 You will need to have a '''~/.java.policy''', an example can be found here: https://github.com/flatland/clojail
+If you are under windows, you many find this issue resolution helpfull in setting up https://github.com/flatland/clojail/issues/4
 
 
 ### Methodology.
