@@ -1,3 +1,3 @@
-(ns adatx.sandbox)
+(ns adatx.sandboxns)
 
 "intentionally empty"

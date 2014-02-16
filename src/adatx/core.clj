@@ -7,7 +7,7 @@
  )
 ;;TODOs 2013-0-24
 ;TODO DONE move genprog and spec_iterate to their own namespace (and anything supporting them)
-;TODO 
+;TODO
 
 
 ;;TODO
@@ -32,6 +32,7 @@
 ;;DONE Setting up sandbox in clojail
 
 
+(quote
 
 (def tester [(blacklist-symbols #{'alter-var-root})
              (blacklist-objects [java.lang.Thread])]) ; Create a blacklist.
@@ -42,7 +43,7 @@
 (defmacro my_eval [& body]
   `(try (deref (future
            {:eval (eval ~@body)
-            :expr    ~@body 
+            :expr    ~@body
             :quoted '~@body})
          10 {:timeout 10})
      (catch Exception e# {:error 1 :errormsg e#     :expr    ~@body :quoted '~@body})
@@ -51,7 +52,7 @@
 (defmacro my_eval2 [& body]
   `(let [fut# (future
                {:eval   (eval ~@body)
-                :expr    ~@body 
+                :expr    ~@body
                 :quoted '~@body})
          ans# (try (deref fut#
                      10 {:timeout 10})
@@ -64,7 +65,7 @@
 (defmacro my_eval3 [& body]    ;; trying to cancel before we deref to prevent heapspace hits
   `(let [fut# (future
                {:eval   (eval ~@body)
-                :expr    ~@body 
+                :expr    ~@body
                 :quoted '~@body})
          cancel# (do (Thread/sleep 10) (future-cancel fut#))
          ]
@@ -77,7 +78,7 @@
 (defmacro my_eval21 [& body]        ;;uses clojail sandbox, is safe to all known hangs,  Just need to feed a collectin as program, probably a list
   `(let [fut# (future
                {:eval-sb   (sb ~@body)
-                :expr    ~@body 
+                :expr    ~@body
                 :quoted '~@body})
          ans# (try (deref fut#
                      50 {:timeout 50 :expr ~@body :quoted '~@body})
@@ -91,7 +92,7 @@
 (defn my_eval22 [body]     ;;function version here also works, but breaks the :quoted key, which is not important
   (let [fut (future
                {:eval-sb   (sb body)  ;sandboxed evaluation
-                :expr    body 
+                :expr    body
                 :quoted 'body})
         ans (try (deref fut
                      50 {:timeout 50 :expr    body :quoted 'body :error 1})
@@ -104,7 +105,7 @@
 (defn my_eval22e [body]     ;;function version here also works, but breaks the :quoted key, which is not important
   (let [fut (future
                {:eval-sb   (eval body)  ;sandboxed evaluation
-                :expr    body 
+                :expr    body
                 :quoted 'body})
         ans (try (deref fut
                      50 {:timeout 50 :expr    body :quoted 'body :error 1})
@@ -116,12 +117,12 @@
 
 
 
-(defmacro add_timing [& body]    ;Do I really need a macro here??? Yes, nano checkpoints would not see the execution time under normal evaluation 
+(defmacro add_timing [& body]    ;Do I really need a macro here??? Yes, nano checkpoints would not see the execution time under normal evaluation
   `(let [start_nanotime#  (System/nanoTime)
          answer# ~@body
          end_nanotime# (System/nanoTime)]
-   (conj answer# { ;:start_nanotime start_nanotime# 
-                   ;:end_nanotime end_nanotime# 
+   (conj answer# { ;:start_nanotime start_nanotime#
+                   ;:end_nanotime end_nanotime#
                    :eval_nanotime (- end_nanotime# start_nanotime#) })))
 
 
@@ -136,7 +137,7 @@
   (if (< x 0)
     x
     (stackm (dec x))))
-  
+
 ;;  (stackm 10000)
 
 ;complexity estimates
@@ -150,8 +151,8 @@
 
 
 ;(spec_iterate spec keylist)
-;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)   
-;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) {}) 
+;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) symlookup)
+;;(genprog nil '(1 2 3 4 :l 5 6 7 :ld 8 9 ) {})
 
 
 
@@ -171,7 +172,7 @@
 
 
 ;;TODO do this lazily...
- 
+
 ; (def allprogs (genprogs-lazy '( 1) '(1 2 3 :l :ld) symlookup))
 ;;  (time (nth allprogs 10000))
  ;  ;;;;(-- next allprogs)
@@ -222,34 +223,34 @@
 ;;(exemplar-in prog-holder '(+ x x) '(5) :goo)
 
 ;;;;;;;;;;;Prog holder end;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
- 
+
 
 (quote
   ;;Review of stability under different levels of eval safety.
-  
-  (time (my_eval22 (exemplar-test-list 
+
+  (time (my_eval22 (exemplar-test-list
                   '(fn [x] (+ 4 ::prog))
                    '(+ x x)
                     '(5))))
-  (time (my_eval2 (exemplar-test-list 
+  (time (my_eval2 (exemplar-test-list
                   '(fn [x] (+ 4 ::prog))
                    '(+ x x)
                     '(5))))
-  (time (my_eval2 (exemplar-test-list 
+  (time (my_eval2 (exemplar-test-list
                   '(fn forever[x] (+ 4 (forever 4) ::prog))
                    '(+ x x)
                     '(5))))
   ;; this does not blow up my_eval2 due to a type check...
-  (time (my_eval2 (exemplar-test-list 
+  (time (my_eval2 (exemplar-test-list
                   '(fn forever [x] (+ 4 (iterate inc 1) ::prog))
                    '(+ x x)
                     '(5))))
   ;; But this gives us a GC overhead limit with my_eval2 but is ok with my_eval22 by hitting the timeout.
-  (time (my_eval22 (exemplar-test-list 
+  (time (my_eval22 (exemplar-test-list
                   '(fn forever [x] (iterate inc 1))
                    '(+ x x)
                     '(5))))
-  
+
   ;;Plan is to pack 1000 my_eval2 calls into a single my_eval22 call....
   (time (my_eval22   '(macroexpand-1 '(my_eval2 (exemplar-test-list   ;;"DO NOT RUN, this will blow up even my_eval22"
                   '(fn forever [x] (iterate inc 1))
@@ -258,36 +259,36 @@
                     '(5))))))
       ;;This cripples the sandbox  and then returns: #<ExecutionException java.util.concurrent.ExecutionException: java.security.AccessControlException: access denied (java.lang.RuntimePermission createSecurityManager
       ;; even on other, valid calls.  Kills the repls and even eclipse.
-      
-      
+
+
 (defn makemanytests [numtests]
-  
-      (map (fn [x] (exemplar-test-list 
+
+      (map (fn [x] (exemplar-test-list
                   '(fn [x] (+ 4 ::prog))
                    x
                     '(5)))
-      
+
       (genprogs_n numtests '(1) '(1 2 :l :ld) {1 '+ 2 'x :l :ld})
       ))
 
 
   (def answers (map my_eval22e
    (makemanytests 10)))
-  
-  
- 
+
+
+
   (def sb2 (sandbox tester :timeout 1000 :namespace 'adatx.core))
 
-  
+
   (defn answers-safe [] (sb2  '(map my_eval22e
    (makemanytests 200))))
-  
+
   (count (answers-safe))
-        
-  
-  
-  
-(time 
+
+
+
+
+(time
 (pprint (filter #(not (nil? %)) (map :eval-sb (answers-safe))))
 )
 
@@ -305,7 +306,7 @@
 ;;for these key list was tiny, at (1 2 :l :v :ld)
 ;(time (frequencies (pmap count (take 10000000 (iterate spec_iter_defed  '(1)   )))))
 ;;"Elapsed time: 245897.282269 msecs"  (on the thinkpad)
-;;{1 4, 2 16, 3 72, 4 336, 5 1600, 6 7712, 7 37472, 8 183104, 9 898432, 10 4422144, 11 4449108} 
+;;{1 4, 2 16, 3 72, 4 336, 5 1600, 6 7712, 7 37472, 8 183104, 9 898432, 10 4422144, 11 4449108}
 ;(time (frequencies (map count (take 10000000 (iterate spec_iter_defed  '(1)   )))))
 ;;"Elapsed time: 157034.765806 msecs"   (on the thinkpad)
 ;;;{1 4, 2 16, 3 72, 4 336, 5 1600, 6 7712, 7 37472, 8 183104, 9 898432, 10 4422144, 11 4449108}
@@ -316,4 +317,6 @@
 
 (def sb (sandbox tester :timeout 100 :namespace 'adatx.core))
 
+
+ )
 
