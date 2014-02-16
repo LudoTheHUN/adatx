@@ -156,9 +156,6 @@
          keylist             (concat (filter (fn [x] (not (= x :ld))) (keys symlookup)) '(:ld))
 
        ]
-
-    (println "symlookup:" symlookup)
-    (println "keylist" keylist)
     (->>
      (progseq/genprogs-lazy init-spec keylist symlookup)
      (take maxprogs)
@@ -185,8 +182,8 @@
   :symvec        ['+ '- 'x1 'x2]
   ;:symlookup     {1 '+ 2 '- 5 'x1 6 'x2 :l :listgen :ld :depthdown}   ;
   ;:symlookup     (symlookup/make_symlookup_map_l  ['+ '- 'x1 'x2])
-  :prog-holder   '(fn [x1 x2] :adatx.prog-hold/prog)
-  :testfun       (fn [in out] (= in out))   ;optional, default is =
+  :prog-holder   '(fn [x1 x2] :adatx.prog-hold/prog)    ;this is the simplest two arity prog-holder. :adatx.prog-hold/prog represents where in the s-expression we want to generate code.
+  :testfun       (fn [returned out] (= returned out))   ;optional, default is = .  Returned is result of the :in being passed as parameters to the generated fn, out is the specified :out.
   :in-out-pairs  [{:in [1 2] :out 4}
                   {:in [1 3] :out 5}
                   {:in [2 3] :out 7}
@@ -202,6 +199,15 @@
  })
 
 )
+
+
+
+(defn get-solution-fn [solution]
+ (:ready-prog (first (:evaled-maps (first solution)))))
+
+ (def solution_fn (eval (get-solution-fn solution_example)))
+
+ (solution_fn 6 7)
 
 )
 
