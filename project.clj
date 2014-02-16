@@ -9,5 +9,6 @@
                  ]
   :plugins [
             [quickie "0.2.5"]
+            [lein-cloverage "1.0.2"]
             ]
   :main adatx.core)

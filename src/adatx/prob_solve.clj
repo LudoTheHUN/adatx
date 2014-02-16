@@ -202,10 +202,10 @@
 
 
 
-(defn get-solution-fn [solution]
+(defn get-solution [solution]
  (:ready-prog (first (:evaled-maps (first solution)))))
 
- (def solution_fn (eval (get-solution-fn solution_example)))
+ (def solution_fn (eval (get-solution solution_example)))
 
  (solution_fn 6 7)
 
