@@ -10,9 +10,9 @@
 
 (defn myadd [x1 x2] (+ x1 x2))
 
+(deftest test-prog-eval
 
-
-(is (= 
+(is (=
       (prog-eval/prog-eval '(prog-eval/stackm!! 40) sandbox 1000)  {:eval-sb -1, :expr '(prog-eval/stackm!! 40), :error 0}
       ))
 
@@ -20,6 +20,4 @@
       (prog-eval/prog-eval '(myadd 40 50) sandbox 1000)            {:eval-sb 90, :expr '(myadd 40 50), :error 0}
       ))
 
-
-
-
+)

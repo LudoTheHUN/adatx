@@ -34,5 +34,5 @@ into
 
 ))
 
-;;eg: (make_symlookup_map ['+ '- 'x1 'x2 'fn])    ;; {:v G__239626, :ld G__239625, :l G__239624, 4 fn, 3 x2, 2 x1, 1 -, 0 +}
+;;eg: (make_symlookup_map_v ['+ '- 'x1 'x2 'fn])    ;; {:v G__239626, :ld G__239625, :l G__239624, 4 fn, 3 x2, 2 x1, 1 -, 0 +}
 

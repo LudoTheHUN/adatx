@@ -1,9 +1,9 @@
 (ns adatx.core
-   (:use [clojail.core :only [sandbox]]
-        [clojail.testers :only [blacklist-symbols blacklist-objects]]
-        [clojure.pprint]
-        [clojure.walk]
-        [adatx.progseq :as progseq])
+  ; (:use [clojail.core :only [sandbox]]
+  ;      [clojail.testers :only [blacklist-symbols blacklist-objects]]
+  ;      [clojure.pprint]
+  ;      [clojure.walk]
+  ;      [adatx.progseq :as progseq])
  )
 ;;TODOs 2013-0-24
 ;TODO DONE move genprog and spec_iterate to their own namespace (and anything supporting them)

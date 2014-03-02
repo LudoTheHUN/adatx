@@ -101,6 +101,21 @@
    ))
 
 
+(defn my_eval22e_tout [body timeout]     ;;function version here also works, but breaks the :quoted key, which is not important
+  (let [fut (future
+               {:eval-sb   (eval body)  ;non sandboxed evaluation
+                :expr    body
+                :error 0})
+        ans (try (deref fut
+                     timeout {:timeout timeout :expr    body :quoted 'body :error 1})
+                  (catch Exception e {:error 1 :errormsg e     :expr    body :quoted 'body})
+                  (finally (future-cancel fut)))
+         ]
+     ;(future-cancel fut)
+     ans
+   ))
+
+
 (defn my_eval22-wtimeout [body timeout]     ;;function version here also works, but breaks the :quoted key, which is not important
   (let [fut (future
                {:eval-sb   (sb body)  ;sandboxed evaluation
@@ -146,7 +161,9 @@
 
 (defn prog-eval [evalready-prog sandbox timeout]
   "result_of_the_evaluation"
-  (my_eval22-wtimeout-wsb evalready-prog sandbox timeout))
+ (if (= :none sandbox)
+  (my_eval22e_tout evalready-prog  timeout)
+  (my_eval22-wtimeout-wsb evalready-prog sandbox timeout)))
 
 
 
