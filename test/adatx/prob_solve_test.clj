@@ -55,3 +55,18 @@
   ;:maxprogs 5000  ;optional, default 1000000 , how many program we'll generate before giving up
  }
  )
+
+#_(adatx/prob-solve
+ {
+  :symvec        ['+ '- '* '/ 'x1 'x2]
+  :prog-holder   '(fn [x1 x2] (* x1 3 (- x2 :adatx.prog-hold/prog)))    ;this is the simplest two arity prog-holder. :adatx.prog-hold/prog represents where in the s-expression we want to generate code.
+  :in-out-pairs  [{:in [1 3] :out 4}
+                  {:in [1 4] :out 5}
+                  {:in [2 4] :out 7}
+                  {:in [4 4] :out 11}]
+  :sandbox :none
+  :loglevel 1     ;optional, default 1
+  ;:maxprogs 5000  ;optional, default 1000000 , how many program we'll generate before giving up
+ }
+ )
+

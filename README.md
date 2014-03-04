@@ -81,6 +81,7 @@ If you are under windows, you many find this issue resolution helpful in setting
 
 One of the challenges is surviving execution of potentially crippling non terminating functions. Each attempt is given a time-out, after which the thread it runs on is killed. It may be necessary to increase this time-out on slower computers so that we minimise the chance of killing a correct program. Java's thread.stop is deprecated, but used heavily by this project via the clojail library.
 
+
 ### TODO's
 
 Only works on specific arities.
@@ -88,6 +89,8 @@ Only works on specific arities.
 java interop is not tested at all.
 
 Non optimal search, some low hanging speedups possible, eg: knowing allowed arities of functions, by constraning via types, by remembering previous programs that were partially correct (just for starters)
+
+The search is completely sequential.
 
 ### Full spec
 
