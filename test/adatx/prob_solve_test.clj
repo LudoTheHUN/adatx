@@ -52,6 +52,6 @@
                   {:in [4 4] :out 11}]
   :sandbox :none
   :loglevel 1     ;optional, default 1
-  :maxprogs 5000  ;optional, default 1000000 , how many program we'll generate before giving up
+  ;:maxprogs 5000  ;optional, default 1000000 , how many program we'll generate before giving up
  }
  )
