@@ -146,7 +146,7 @@
                  in-out-pairs sandbox timeout testfun maxprogs loglevel symvec nprogs]
           :or {timeout  200
                maxprogs 1000000
-               loglevel 1
+               loglevel 0
                testfun  =
                nprogs 1}
             }   prob-holder

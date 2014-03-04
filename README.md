@@ -12,7 +12,7 @@ Initially, X will be a brute force search through the space of all programs.
 add a dependency in lein
 
 ```
-[org.clojars.ludothehun/adatx "0.1.0-SNAPSHOT"]
+[adatx "0.1.0-SNAPSHOT"]
 ```
 
 Then in you code:
@@ -29,12 +29,12 @@ A 2 arity example:
  (adatx/prob-solve
   {
   :symvec        ['+ '- 'x1 'x2]
-  :prog-holder   '(fn [x1 x2] :adatx.prog-hold/prog)    ;this is the simplest two arity prog-holder.
+  :prog-holder   '(fn [x1 x2] :adatx.prog-hold/prog)
   :in-out-pairs  [{:in [1 2] :out 4}
                   {:in [1 3] :out 5}
                   {:in [2 3] :out 7}
                   {:in [4 3] :out 11}]
-  :sandbox :none}))   ;;In general, this may time some time...
+  :sandbox :none}))   ;;In general, this may take some time...
 
 (adatx/get-solution workings)    ; => (fn [x1 x2] (+ x1 x1 x2))
 
@@ -106,7 +106,7 @@ Non optimal search, some low hanging speedups possible, eg: knowing allowed arit
   ;;:sandbox :none     ;; This will run with no sandbox, this will not survive some infinite currucsions
   :sandbox :none
   :timeout 200    ;optinal default 200 ms, making this too low can mean skipping a valid (or all) solutions. Is used to timeout the future that execures the work as well as the sandbox timeout.
-  :loglevel 0     ;optional, default 1
+  :loglevel 0     ;optional, default 0
   :maxprogs 5000  ;optional, default 1000000 , how many program we'll generate before giving up
   :nprogs   2       ;optional, default 1 , number of correct programs to find
  }
@@ -121,7 +121,7 @@ Non optimal search, some low hanging speedups possible, eg: knowing allowed arit
 
 `:testfun` This is the function that will tests if the fn output matches to what you specified in `in-out-pairs`
 
-`in-out-pairs` This is where you provide your test cases for input that outputs (or the x's and y's in `(fn [x] ?)  => y`
+`:in-out-pairs` This is where you provide your test cases for input that outputs (or the x's and y's in `(fn [x] ?)  => y`
 
 `:sandbox` you can specify a clojail jail to run your code in, if you really do want to have side effects, this is probably a must.
 
@@ -131,7 +131,7 @@ Non optimal search, some low hanging speedups possible, eg: knowing allowed arit
 
 `:maxprogs` number of expressions we will generate before giving up on finding a solution.
 
-`:nprogs` we can keep searching untill we find :nprogs solutions to.
+`:nprogs` we can keep searching untill we find :nprogs solutions.
 
 ### Notice
 
