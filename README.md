@@ -38,7 +38,7 @@ A 2 arity example:
 
 (adatx/get-solution workings)    ; => (fn [x1 x2] (+ x1 x1 x2))
 
-((solution_fn workings) 4 3)     ; => 11
+((adatx/solution_fn workings) 4 3)     ; => 11
 
 ```
 
