@@ -142,6 +142,7 @@ The search is completely sequential.
 
 ### Some more examples
 
+... all of them quite contrived.
 
 ```clojure
 (def prog-holder
@@ -212,6 +213,14 @@ The search is completely sequential.
 )
 ```
 
+
+### Discussion
+
+https://groups.google.com/forum/#!topic/clojure/F-OmM9tLwbc
+
+https://github.com/webyrd/mad-at-x
+
+https://groups.google.com/forum/#!topic/london-clojurians/mUNWibQNKLk
 
 ### Notice
 
