@@ -81,6 +81,10 @@ If you are under windows, you many find this issue resolution helpful in setting
 
 One of the challenges is surviving execution of potentially crippling non terminating functions. Each attempt is given a time-out, after which the thread it runs on is killed. It may be necessary to increase this time-out on slower computers so that we minimise the chance of killing a correct program. Java's thread.stop is deprecated, but used heavily by this project via the clojail library.
 
+Too slow for non toy problems in current version.
+
+List as inputs or outputs seems to be an issue, vectors work ok.
+
 
 ### TODO's
 
@@ -135,6 +139,79 @@ The search is completely sequential.
 `:maxprogs` number of expressions we will generate before giving up on finding a solution.
 
 `:nprogs` we can keep searching untill we find :nprogs solutions.
+
+### Some more examples
+
+
+```clojure
+(def prog-holder
+  ;;finding a reduce function
+  ;;solution: (fn [lst] (reduce (fn [xs x] (+ xs (* xs x))) lst))
+  ;;runtime ~300000 seconds
+  {
+  :symvec        ['* '+ 'xs 'x]
+  :prog-holder   '(fn [lst]
+                    (reduce (fn [xs x]
+                              :adatx.prog-hold/prog)
+                            lst))
+  :testfun       (fn [returned out] (= returned out))
+  :in-out-pairs  [{:in [ [1 4 5] ] :out 30}
+                  {:in [ [2 4 5] ] :out 60}
+                  {:in [ [1 4 7] ] :out 40}
+                  ]
+  :sandbox :none
+  :timeout 500
+  :loglevel 10
+  :maxprogs 50000  ;optional, default 1000000 , how many program we'll generate before giving up
+  :nprogs   1
+ }
+)
+```
+
+```clojure
+(def prog-holder
+  ;;First ten numbers tautology.
+  ;;solution   (fn [] (vec (take 10 (iterate inc 1))))
+  ;;runtime    ~130ms
+  {
+  :symvec        ['iterate 'inc '1]
+  :prog-holder   '(fn [] (vec (take 10
+                           :adatx.prog-hold/prog)
+                          ))
+  :testfun       (fn [returned out] (= returned out))
+  :in-out-pairs  [{:in [] :out [1 2 3 4 5 6 7 8 9 10]}
+                  ]
+  :sandbox :none;;(prog-eval/make-sb_tout 'adatx.sandboxns 500)
+  :timeout 200
+  :loglevel 10
+  :maxprogs 5000  ;optional, default 1000000 , how many program we'll generate before giving up
+  :nprogs   1
+ }
+)
+```
+
+```clojure
+(def prog-holder
+  ;;Fibonacci sequence
+  ;;solution  (fn [] (take 10 ((fn fib [] (lazy-cat [0 1] (map + (rest (fib)) (fib)))))))
+  ;;runtime ~1000years (based on ~7^16 tries at 1000 tests per second. Note, this would be far shorter if we take Moore's law into account, aprox 9 yours in 2044  )
+  {
+  :symvec        ['lazy-cat 'map '+ 'rest '0 '1 'fib]
+  :prog-holder   '(fn [] (vec (take 10
+                           ((fn fib [] :adatx.prog-hold/prog))
+                          )))
+  :testfun       (fn [returned out] (= returned out))
+  :in-out-pairs  [{:in [] :out [0 1 1 2 3 5 8 13 21 34]}
+                  ]
+  :sandbox :none
+  :timeout 200
+  :loglevel 0
+  :maxprogs 100000000000000000000  ;optional, default 1000000 , how many program we'll generate before giving up
+  :nprogs   1
+ }
+)
+```
+
 
 ### Notice
 
