@@ -162,7 +162,7 @@ The search is completely sequential.
   :sandbox :none
   :timeout 500
   :loglevel 10
-  :maxprogs 50000  ;optional, default 1000000 , how many program we'll generate before giving up
+  :maxprogs 50000
   :nprogs   1
  }
 )
@@ -184,7 +184,7 @@ The search is completely sequential.
   :sandbox :none;;(prog-eval/make-sb_tout 'adatx.sandboxns 500)
   :timeout 200
   :loglevel 10
-  :maxprogs 5000  ;optional, default 1000000 , how many program we'll generate before giving up
+  :maxprogs 5000
   :nprogs   1
  }
 )
@@ -206,7 +206,7 @@ The search is completely sequential.
   :sandbox :none
   :timeout 200
   :loglevel 0
-  :maxprogs 100000000000000000000  ;optional, default 1000000 , how many program we'll generate before giving up
+  :maxprogs 100000000000000000000
   :nprogs   1
  }
 )
