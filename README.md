@@ -195,7 +195,7 @@ The search is completely sequential.
 (def prog-holder
   ;;Fibonacci sequence
   ;;solution  (fn [] (take 10 ((fn fib [] (lazy-cat [0 1] (map + (rest (fib)) (fib)))))))
-  ;;runtime ~1000years (based on ~7^16 tries at 1000 tests per second. Note, this would be far shorter if we take Moore's law into account, aprox 9 yours in 2044  )
+  ;;runtime ~1000years (based on ~7^16 tries at 1000 tests per second. Note, this would be far shorter if we take Moore's law into account, aprox 9 hours in 2044  )
   {
   :symvec        ['lazy-cat 'map '+ 'rest '0 '1 'fib]
   :prog-holder   '(fn [] (vec (take 10
