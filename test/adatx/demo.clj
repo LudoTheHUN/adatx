@@ -5,6 +5,7 @@
         adatx.symlookup)
    (:require [adatx.prob-solve :as adatx]))
 
+;;put this together as prep for https://skillsmatter.com/skillscasts/5337-adatx-test-driven-development-literally
 
 1
 2
@@ -100,11 +101,11 @@
 
 
 
-(def spek
+#_(def spek
   { :symvec        ['+ '* 'x1 'x2 2]
     :prog-holder   '(fn [x1 x2] :adatx.prog-hold/prog)
     :testfun       (fn [returned out] (= returned out))
     :in-out-pairs  [{:in [1 2] :out 4}  {:in [1 3] :out 5} {:in [2 3] :out 7} {:in [4 3] :out 11}]})
 
-(let [workings (adatx/prob-solve spek)]
+#_(let [workings (adatx/prob-solve spek)]
   (adatx/get-solution workings))

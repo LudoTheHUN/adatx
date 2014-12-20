@@ -56,7 +56,7 @@
  }
  )
 
-#_(adatx/prob-solve
+#_(solve/prob-solve
  {
   :symvec        ['+ '- '* '/ 'x1 'x2]
   :prog-holder   '(fn [x1 x2] (* x1 3 (- x2 :adatx.prog-hold/prog)))    ;this is the simplest two arity prog-holder. :adatx.prog-hold/prog represents where in the s-expression we want to generate code.
