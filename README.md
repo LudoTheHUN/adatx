@@ -222,6 +222,10 @@ https://github.com/webyrd/mad-at-x
 
 https://groups.google.com/forum/#!topic/london-clojurians/mUNWibQNKLk
 
+### Presentation
+
+https://skillsmatter.com/skillscasts/5337-adatx-test-driven-development-literally
+
 ### Notice
 
 You must take care with side-effect functions. They will be called with all values/functions reachable by the search.
