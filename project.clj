@@ -1,4 +1,4 @@
-(defproject adatx "0.1.0-SNAPSHOT"
+(defproject adatx "0.2.0-SNAPSHOT"
   :description "A Clojure library designed for Automatic Design of Algorithms Through X."
   :url "https://github.com/LudoTheHUN/adatx"
   :license {:name "Eclipse Public License"
